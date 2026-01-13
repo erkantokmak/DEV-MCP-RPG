@@ -1,5 +1,3 @@
-version: '3.8'
-
 # ===========================================
 # DEV-RPG - CI/CD Analysis Platform
 # All ports in range 3200-3300

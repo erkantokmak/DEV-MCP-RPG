@@ -1,5 +1,4 @@
 import { Icon } from '../Icon'
-import { ProgressBar } from '../ProgressBar'
 import { Badge } from '../Badge'
 import { motion } from 'framer-motion'
 
