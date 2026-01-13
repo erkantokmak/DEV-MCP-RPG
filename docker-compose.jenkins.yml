@@ -1,0 +1,49 @@
+version: '3.8'
+
+# ===========================================
+# Dev-RPG Jenkins Integration
+# Jenkins container ile birlikte çalışacak yapılandırma
+# ===========================================
+
+# Bu dosya ana docker-compose.yml ile birlikte kullanılır:
+# docker-compose -f docker-compose.yml -f docker-compose.jenkins.yml up -d
+
+services:
+  # Jenkins'in Dev-RPG network'üne bağlanması için
+  # Eğer Jenkins zaten başka bir compose ile çalışıyorsa,
+  # external network olarak bağlanması gerekir
+  
+  # Option 1: Jenkins'i Dev-RPG stack'ine dahil et
+  jenkins:
+    image: jenkins/jenkins:lts
+    container_name: dev-rpg-jenkins
+    user: root
+    ports:
+      - "3280:8080"   # Jenkins Web UI
+      - "3281:50000"  # Jenkins Agent port
+    environment:
+      - JAVA_OPTS=-Djenkins.install.runSetupWizard=false
+      - DEV_RPG_API_URL=http://backend:3210
+      - DEV_RPG_N8N_URL=http://n8n:5678
+    volumes:
+      - jenkins_home:/var/jenkins_home
+      - /var/run/docker.sock:/var/run/docker.sock
+      # Dev-RPG projesi için workspace
+      - ./:/var/jenkins_home/workspace/dev-rpg:ro
+    networks:
+      - dev-rpg-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/login"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+volumes:
+  jenkins_home:
+    name: dev-rpg-jenkins-home
+
+networks:
+  dev-rpg-network:
+    external: true
+    name: dev-rpg-network

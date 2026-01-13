@@ -1,0 +1,200 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Base styles */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  @apply font-body text-white antialiased;
+}
+
+/* Custom Scrollbar for cyberpunk feel */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-background-dark;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-surface-highlight rounded;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-primary;
+}
+
+/* Selection */
+::selection {
+  @apply bg-primary text-black;
+}
+
+/* Scanlines Effect */
+.scanlines::before {
+  content: " ";
+  display: block;
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  right: 0;
+  background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), 
+              linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+  z-index: 50;
+  background-size: 100% 2px, 3px 100%;
+  pointer-events: none;
+}
+
+/* Glitch text animation */
+.glitch-hover:hover {
+  text-shadow: 2px 0 #ff00cc, -2px 0 #00e5ff;
+}
+
+/* Grid pattern background */
+.grid-bg {
+  background-image: radial-gradient(#3fff14 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+
+/* Hex pattern background */
+.hex-bg {
+  background-image: radial-gradient(#1f2937 15%, transparent 16%), 
+                    radial-gradient(#1f2937 15%, transparent 16%);
+  background-size: 20px 20px;
+  background-position: 0 0, 10px 10px;
+}
+
+/* Typing cursor animation */
+.typing-cursor::after {
+  content: '|';
+  animation: blink 1s step-end infinite;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+/* Custom toggle switch */
+.cyber-toggle {
+  position: relative;
+  width: 44px;
+  height: 22px;
+  appearance: none;
+  @apply bg-surface-highlight border border-gray-600 rounded-sm cursor-pointer transition-all;
+}
+
+.cyber-toggle::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  @apply bg-gray-400 rounded-sm transition-all;
+}
+
+.cyber-toggle:checked {
+  @apply bg-primary/10 border-primary shadow-neon;
+}
+
+.cyber-toggle:checked::after {
+  left: 24px;
+  @apply bg-primary shadow-neon;
+}
+
+/* Item slot hover effect */
+.item-slot:hover .item-icon {
+  transform: scale(1.1);
+}
+
+.item-slot::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(45deg, transparent 40%, rgba(255,255,255,0.1) 45%, rgba(255,255,255,0.05) 50%, transparent 60%);
+  opacity: 0;
+  transition: opacity 0.3s;
+  pointer-events: none;
+}
+
+.item-slot:hover::after {
+  opacity: 1;
+}
+
+/* Corner brackets for cards */
+.corner-bracket {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  border-style: solid;
+  @apply border-primary;
+  border-width: 0;
+  opacity: 0.5;
+  transition: opacity 0.3s;
+}
+
+.group:hover .corner-bracket {
+  opacity: 1;
+}
+
+/* Neon text glow */
+.text-neon-primary {
+  text-shadow: 0 0 10px rgba(63, 255, 20, 0.6);
+}
+
+.text-neon-secondary {
+  text-shadow: 0 0 10px rgba(0, 229, 255, 0.6);
+}
+
+.text-neon-destructive {
+  text-shadow: 0 0 10px rgba(255, 0, 204, 0.6);
+}
+
+/* Progress bar stripe animation */
+.progress-stripes {
+  background-image: linear-gradient(
+    45deg,
+    rgba(0, 0, 0, 0.1) 25%,
+    transparent 25%,
+    transparent 50%,
+    rgba(0, 0, 0, 0.1) 50%,
+    rgba(0, 0, 0, 0.1) 75%,
+    transparent 75%,
+    transparent
+  );
+  background-size: 20px 20px;
+  animation: progress-animation 1s linear infinite;
+}
+
+@keyframes progress-animation {
+  0% {
+    background-position: 0 0;
+  }
+  100% {
+    background-position: 20px 20px;
+  }
+}
+
+/* Boss health stripes */
+.boss-health-stripes {
+  background-image: linear-gradient(
+    45deg,
+    rgba(0, 0, 0, 0.2) 25%,
+    transparent 25%,
+    transparent 50%,
+    rgba(0, 0, 0, 0.2) 50%,
+    rgba(0, 0, 0, 0.2) 75%,
+    transparent 75%,
+    transparent
+  );
+  background-size: 30px 30px;
+  animation: progress-animation 2s linear infinite;
+}

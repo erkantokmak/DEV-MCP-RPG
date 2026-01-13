@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Dev-RPG Main Dashboard</title>
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Space+Grotesk:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Theme Config -->
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#3fff14", // Lime Green
+                        "secondary": "#00e5ff", // Cyan
+                        "destructive": "#ff00cc", // Magenta
+                        "background-light": "#f1f2f4",
+                        "background-dark": "#0f1115", // Deep Slate/Black
+                        "surface-dark": "#161b22", // Slightly lighter for cards
+                        "surface-highlight": "#1f2937",
+                    },
+                    fontFamily: {
+                        "display": ["Space Grotesk", "sans-serif"],
+                        "body": ["Inter", "sans-serif"],
+                        "mono": ["Space Grotesk", "monospace"], // Using Space Grotesk for mono numbers too as per design
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem", 
+                        "lg": "0.5rem", 
+                        "xl": "0.75rem", 
+                        "full": "9999px"
+                    },
+                    boxShadow: {
+                        "neon": "0 0 5px theme('colors.primary'), 0 0 20px theme('colors.primary.DEFAULT / 0.3')",
+                        "neon-secondary": "0 0 5px theme('colors.secondary'), 0 0 20px theme('colors.secondary / 0.3')",
+                        "neon-destructive": "0 0 5px theme('colors.destructive'), 0 0 20px theme('colors.destructive / 0.3')",
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        /* Scanline Effect */
+        .scanlines::before {
+            content: " ";
+            display: block;
+            position: absolute;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            right: 0;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+            z-index: 50;
+            background-size: 100% 2px, 3px 100%;
+            pointer-events: none;
+        }
+        
+        /* Custom Scrollbar for cyberpunk feel */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0f1115; 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #1f2937; 
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #3fff14; 
+        }
+
+        /* Glitch text animation placeholder (simplified) */
+        .glitch-hover:hover {
+            text-shadow: 2px 0 #ff00cc, -2px 0 #00e5ff;
+        }
+    </style>
+</head>
+<body class="relative flex h-screen w-full flex-col bg-background-dark text-white font-body overflow-hidden selection:bg-primary selection:text-black">
+<!-- Scanlines Overlay -->
+<div class="scanlines pointer-events-none absolute inset-0 z-50 opacity-40 mix-blend-overlay"></div>
+<!-- Main Layout Container -->
+<div class="flex h-full flex-col relative z-10">
+<!-- Header -->
+<header class="flex items-center justify-between border-b border-[#2a3a27] bg-[#0f1115]/95 backdrop-blur-sm px-6 py-4 shrink-0">
+<div class="flex items-center gap-4">
+<div class="flex items-center justify-center size-10 rounded bg-primary/10 border border-primary text-primary shadow-neon">
+<span class="material-symbols-outlined text-2xl">terminal</span>
+</div>
+<div>
+<h1 class="text-xl font-display font-bold tracking-widest text-white uppercase leading-none">DEV-RPG <span class="text-primary">//</span> DASHBOARD</h1>
+<p class="text-xs text-gray-400 font-mono tracking-widest mt-1">SYS.VER.4.2.0 :: CONNECTED</p>
+</div>
+</div>
+<div class="flex items-center gap-6">
+<!-- Status Indicators -->
+<div class="hidden md:flex items-center gap-4 text-xs font-mono uppercase text-gray-400">
+<div class="flex items-center gap-2">
+<span class="size-2 rounded-full bg-primary animate-pulse shadow-neon"></span>
+                        Server: Online
+                    </div>
+<div class="flex items-center gap-2">
+<span class="size-2 rounded-full bg-secondary"></span>
+                        Agents: 3 Active
+                    </div>
+</div>
+<div class="h-8 w-px bg-[#2a3a27]"></div>
+<div class="flex gap-3">
+<button class="flex size-10 items-center justify-center rounded-lg border border-[#2a3a27] bg-surface-dark text-gray-400 hover:text-white hover:border-primary hover:shadow-neon transition-all">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="flex size-10 items-center justify-center rounded-lg border border-[#2a3a27] bg-surface-dark text-gray-400 hover:text-white hover:border-primary hover:shadow-neon transition-all">
+<span class="material-symbols-outlined">settings</span>
+</button>
+<div class="size-10 rounded-lg bg-cover bg-center border border-[#2a3a27]" data-alt="User avatar cyberpunk style" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuDheJ4yHmGqYglVsxmaj8be-WiQx0AaaTAWuphUJDK_pJ7HFEl6JS3eCCuOTv7pW_7O6qJnySNRvYqzPgbYZdSkY_Q_krkDx4hHarqmJOAtfYThD-ymVZgECAnoTecT4P_MqB-K5ckneI4vEsqKyKnfohOBMfoQN1KHPibt6qYU9PKxz11rDW8YgITl__rcDYIdWpyNPFZHb-z04eHCAU7B37K3TewTx14xE9ujaIt6b_t114zMrXyqp-8dAf2Km6FpnsFnfs_Yn8k');"></div>
+</div>
+</div>
+</header>
+<!-- Boss Health Section (Sticky Top of Content) -->
+<div class="px-6 py-6 border-b border-[#2a3a27] bg-[#12141a]">
+<div class="max-w-[1600px] mx-auto w-full">
+<div class="flex items-end justify-between mb-2">
+<h2 class="text-2xl font-display font-bold uppercase tracking-wider text-white flex items-center gap-3">
+<span class="material-symbols-outlined text-destructive">shield_with_heart</span>
+                        Boss Health <span class="text-gray-500">//</span> Project Stability
+                    </h2>
+<span class="text-4xl font-display font-bold text-primary drop-shadow-[0_0_8px_rgba(63,255,20,0.6)]">85%</span>
+</div>
+<!-- Custom Segmented Progress Bar -->
+<div class="relative h-6 w-full bg-[#1e232b] border border-[#2a3a27] rounded overflow-hidden flex gap-1 p-1">
+<!-- The bar is made of small blocks for that retro look. Using a gradient mask trick or just a simple inner div -->
+<div class="h-full bg-primary shadow-neon relative w-[85%] rounded-sm transition-all duration-1000 ease-out flex items-center overflow-hidden">
+<!-- Striped pattern overlay -->
+<div class="absolute inset-0 w-full h-full" style="background-image: linear-gradient(45deg,rgba(0,0,0,.1) 25%,transparent 25%,transparent 50%,rgba(0,0,0,.1) 50%,rgba(0,0,0,.1) 75%,transparent 75%,transparent); background-size: 1rem 1rem;"></div>
+<!-- Shine effect -->
+<div class="absolute top-0 right-0 bottom-0 w-20 bg-gradient-to-l from-white/20 to-transparent"></div>
+</div>
+<!-- Threshold markers -->
+<div class="absolute top-0 bottom-0 left-[30%] w-0.5 bg-black/50 z-10"></div>
+<div class="absolute top-0 bottom-0 left-[60%] w-0.5 bg-black/50 z-10"></div>
+</div>
+<div class="flex justify-between mt-1 text-[10px] font-mono uppercase text-gray-500 tracking-widest">
+<span>Critical</span>
+<span>Unstable</span>
+<span>Stable</span>
+<span>Robust</span>
+</div>
+</div>
+</div>
+<!-- Main Content Grid -->
+<div class="flex flex-1 overflow-hidden">
+<div class="flex w-full max-w-[1600px] mx-auto">
+<!-- Sidebar: The Party -->
+<aside class="w-80 flex flex-col border-r border-[#2a3a27] bg-[#0f1115] overflow-y-auto shrink-0 hidden lg:flex">
+<div class="p-5 sticky top-0 bg-[#0f1115] z-10 pb-2">
+<h3 class="text-gray-400 font-display font-bold tracking-widest uppercase text-sm flex items-center gap-2 mb-4">
+<span class="material-symbols-outlined text-lg text-secondary">groups</span>
+                            The Party
+                        </h3>
+</div>
+<div class="flex flex-col gap-4 px-5 pb-5">
+<!-- Party Member 1 -->
+<div class="group relative rounded-lg bg-surface-dark border border-[#2a3a27] p-4 transition-all hover:border-primary/50 hover:shadow-[0_0_15px_rgba(63,255,20,0.1)] hover:-translate-y-1">
+<div class="flex items-start justify-between gap-3 mb-3">
+<div class="relative size-12 rounded border border-gray-600 overflow-hidden bg-black/50 group-hover:border-primary transition-colors">
+<img alt="Pixel art wizard avatar" class="size-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDmlsGlVzDQtI4g0uh50WWVOxjiqE1FPwJh_xucdW16AXnK2WSAsjcpI6iv-8mH50eLVbgeJwQdZsDqBXjbUJ3XAGQ8tpwRYdAc_vNuTjpgQmXgPBmFzFtWacVR8tqDjELgodMcvkp8oGYX5wVybD_pOZV7YlwrqokowKQfdihkR8OctOAFdhJECi1MSzXV8wzFX_2oH3sCXr_Rt9rR7XiHrLujjhCsme1BrUqjAqniHFVsEeStNs8tApWcsR8cIYTyjYI9LecXp_8"/>
+</div>
+<div class="flex flex-col items-end">
+<span class="text-xs text-primary font-mono">LVL 42</span>
+<span class="text-[10px] text-gray-500 uppercase">Mage Class</span>
+</div>
+</div>
+<div class="mb-3">
+<h4 class="text-white font-display font-bold leading-tight group-hover:text-primary transition-colors">Code Wizard</h4>
+<p class="text-xs text-gray-500 font-mono">Full-Stack Architect</p>
+</div>
+<!-- Stats -->
+<div class="space-y-2">
+<div class="flex items-center gap-2 text-[10px] font-mono text-gray-400">
+<span class="w-8 text-right">ARCH</span>
+<div class="h-1.5 flex-1 bg-gray-800 rounded-full overflow-hidden">
+<div class="h-full bg-secondary w-[90%] shadow-[0_0_5px_theme('colors.secondary')]"></div>
+</div>
+</div>
+<div class="flex items-center gap-2 text-[10px] font-mono text-gray-400">
+<span class="w-8 text-right">PERF</span>
+<div class="h-1.5 flex-1 bg-gray-800 rounded-full overflow-hidden">
+<div class="h-full bg-destructive w-[65%] shadow-[0_0_5px_theme('colors.destructive')]"></div>
+</div>
+</div>
+<div class="flex items-center gap-2 text-[10px] font-mono text-gray-400">
+<span class="w-8 text-right">QUAL</span>
+<div class="h-1.5 flex-1 bg-gray-800 rounded-full overflow-hidden">
+<div class="h-full bg-primary w-[88%] shadow-[0_0_5px_theme('colors.primary')]"></div>
+</div>
+</div>
+</div>
+</div>
+<!-- Party Member 2 -->
+<div class="group relative rounded-lg bg-surface-dark border border-[#2a3a27] p-4 transition-all hover:border-primary/50 hover:shadow-[0_0_15px_rgba(63,255,20,0.1)] hover:-translate-y-1">
+<div class="flex items-start justify-between gap-3 mb-3">
+<div class="relative size-12 rounded border border-gray-600 overflow-hidden bg-black/50 group-hover:border-primary transition-colors">
+<img alt="Pixel art rogue avatar" class="size-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDjPI0TZopHxzmRo253twtAMxXjbRj6ytc9eLWZISrmadike1G9yt0uHAFIUBBXC-s_14DTz0Ti4yHQIxCtLu06JE-8Ux5maPiqsjF_jX0OEtNsQYJl2_NjzJ_kVQvSE66s7tkFG5vAF5ey3bZ6OAjjcQRGJ22ZTZx0qkkXH2GcLM3iG1s09dH8kCndpK-KgHGRWEmMOpznPMIHyBesEdySlgCgw4gyPvNCxHu2-LM9SWSJZsLEoDPu2KrLmCBlurdcaIeyR5qmY5o"/>
+</div>
+<div class="flex flex-col items-end">
+<span class="text-xs text-secondary font-mono">LVL 28</span>
+<span class="text-[10px] text-gray-500 uppercase">Rogue Class</span>
+</div>
+</div>
+<div class="mb-3">
+<h4 class="text-white font-display font-bold leading-tight group-hover:text-secondary transition-colors">Bug Hunter</h4>
+<p class="text-xs text-gray-500 font-mono">QA Engineer</p>
+</div>
+<!-- Stats -->
+<div class="space-y-2">
+<div class="flex items-center gap-2 text-[10px] font-mono text-gray-400">
+<span class="w-8 text-right">ARCH</span>
+<div class="h-1.5 flex-1 bg-gray-800 rounded-full overflow-hidden">
+<div class="h-full bg-secondary w-[40%]"></div>
+</div>
+</div>
+<div class="flex items-center gap-2 text-[10px] font-mono text-gray-400">
+<span class="w-8 text-right">PERF</span>
+<div class="h-1.5 flex-1 bg-gray-800 rounded-full overflow-hidden">
+<div class="h-full bg-destructive w-[85%] shadow-[0_0_5px_theme('colors.destructive')]"></div>
+</div>
+</div>
+<div class="flex items-center gap-2 text-[10px] font-mono text-gray-400">
+<span class="w-8 text-right">QUAL</span>
+<div class="h-1.5 flex-1 bg-gray-800 rounded-full overflow-hidden">
+<div class="h-full bg-primary w-[95%] shadow-[0_0_5px_theme('colors.primary')]"></div>
+</div>
+</div>
+</div>
+</div>
+<!-- Party Member 3 -->
+<div class="group relative rounded-lg bg-surface-dark border border-[#2a3a27] p-4 transition-all hover:border-primary/50 hover:shadow-[0_0_15px_rgba(63,255,20,0.1)] hover:-translate-y-1">
+<div class="flex items-start justify-between gap-3 mb-3">
+<div class="relative size-12 rounded border border-gray-600 overflow-hidden bg-black/50 group-hover:border-primary transition-colors">
+<img alt="Pixel art paladin avatar" class="size-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDk6_RBiHR5q0i8qDIthELAVRc9N9LlgBlNGXrESH430bU_K8RiCTLdmcTwfmwXGSknMZGddPkqdwjtdF8-KaiugQyvwmQpK5mFIUcqnjvgsH7b8ZW29H_ZbehCaXfLOOs_qs9cwTzsn1ARkBbeqMBYMwHssVnQ5nrkW2EOTw4S4b396llGxP_xqvTjRqTR3Ds3I6Dkh1FrWffRuMGGNDwgrANFK7Ffpu8quu3D-ZmWeuRr1usjca8UlDcmyiFIu4NLX0hla3tM7Kw"/>
+</div>
+<div class="flex flex-col items-end">
+<span class="text-xs text-orange-400 font-mono">LVL 56</span>
+<span class="text-[10px] text-gray-500 uppercase">Tank Class</span>
+</div>
+</div>
+<div class="mb-3">
+<h4 class="text-white font-display font-bold leading-tight group-hover:text-orange-400 transition-colors">Sys Admin</h4>
+<p class="text-xs text-gray-500 font-mono">DevOps</p>
+</div>
+<!-- Stats -->
+<div class="space-y-2">
+<div class="flex items-center gap-2 text-[10px] font-mono text-gray-400">
+<span class="w-8 text-right">ARCH</span>
+<div class="h-1.5 flex-1 bg-gray-800 rounded-full overflow-hidden">
+<div class="h-full bg-secondary w-[95%] shadow-[0_0_5px_theme('colors.secondary')]"></div>
+</div>
+</div>
+<div class="flex items-center gap-2 text-[10px] font-mono text-gray-400">
+<span class="w-8 text-right">PERF</span>
+<div class="h-1.5 flex-1 bg-gray-800 rounded-full overflow-hidden">
+<div class="h-full bg-destructive w-[60%]"></div>
+</div>
+</div>
+<div class="flex items-center gap-2 text-[10px] font-mono text-gray-400">
+<span class="w-8 text-right">QUAL</span>
+<div class="h-1.5 flex-1 bg-gray-800 rounded-full overflow-hidden">
+<div class="h-full bg-primary w-[70%]"></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</aside>
+<!-- Main Area: Mission Log -->
+<main class="flex-1 flex flex-col bg-[#0f1115] relative overflow-hidden">
+<!-- Background Grid Pattern -->
+<div class="absolute inset-0 opacity-[0.03] z-0 pointer-events-none" style="background-image: radial-gradient(#3fff14 1px, transparent 1px); background-size: 20px 20px;"></div>
+<div class="p-6 pb-2 z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
+<h3 class="text-gray-400 font-display font-bold tracking-widest uppercase text-sm flex items-center gap-2">
+<span class="material-symbols-outlined text-lg text-primary">list_alt</span>
+                            Mission Log // Recent Activity
+                        </h3>
+<!-- Filter Tabs -->
+<div class="flex bg-surface-dark rounded-lg p-1 border border-[#2a3a27]">
+<button class="px-4 py-1.5 rounded bg-primary/20 text-primary text-xs font-bold uppercase tracking-wider shadow-neon">All</button>
+<button class="px-4 py-1.5 rounded text-gray-400 hover:text-white hover:bg-white/5 text-xs font-bold uppercase tracking-wider transition-colors">Critical</button>
+<button class="px-4 py-1.5 rounded text-gray-400 hover:text-white hover:bg-white/5 text-xs font-bold uppercase tracking-wider transition-colors">Warnings</button>
+</div>
+</div>
+<!-- Log Feed -->
+<div class="flex-1 overflow-y-auto px-6 pb-6 space-y-3 z-10">
+<!-- Log Entry: Pass -->
+<div class="flex flex-col md:flex-row md:items-center gap-4 p-4 rounded-lg bg-surface-dark border border-[#2a3a27] hover:border-primary/40 transition-all group">
+<div class="flex items-center gap-4 min-w-[180px]">
+<div class="size-2 rounded-full bg-primary shadow-neon"></div>
+<div class="flex flex-col">
+<span class="font-mono text-primary text-sm tracking-wider cursor-pointer hover:underline decoration-primary">#8f2a1</span>
+<span class="text-[10px] text-gray-500">10m ago</span>
+</div>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex items-center gap-2 mb-1">
+<p class="text-white text-sm font-medium truncate group-hover:text-primary transition-colors">feat: optimize database query performance</p>
+</div>
+<div class="flex items-center gap-2">
+<div class="flex items-center gap-1 px-2 py-0.5 rounded bg-surface-highlight border border-gray-700">
+<span class="material-symbols-outlined text-[10px] text-secondary">psychology</span>
+<span class="text-[10px] text-gray-300 font-mono uppercase">Analyzed by: The Sensei</span>
+</div>
+<span class="text-[10px] text-gray-500 px-2">+15 XP</span>
+</div>
+</div>
+<div class="flex items-center justify-end min-w-[100px]">
+<div class="px-3 py-1 rounded bg-primary/10 border border-primary/30 text-primary text-xs font-bold uppercase tracking-wider shadow-[0_0_10px_rgba(63,255,20,0.1)]">
+                                    PASS
+                                </div>
+</div>
+</div>
+<!-- Log Entry: Fail -->
+<div class="flex flex-col md:flex-row md:items-center gap-4 p-4 rounded-lg bg-surface-dark border border-destructive/30 hover:border-destructive transition-all group relative overflow-hidden">
+<!-- Fail glow background -->
+<div class="absolute inset-0 bg-destructive/5 pointer-events-none"></div>
+<div class="flex items-center gap-4 min-w-[180px] relative">
+<div class="size-2 rounded-full bg-destructive shadow-neon-destructive animate-pulse"></div>
+<div class="flex flex-col">
+<span class="font-mono text-destructive text-sm tracking-wider cursor-pointer hover:underline decoration-destructive">#1b9d4</span>
+<span class="text-[10px] text-gray-500">32m ago</span>
+</div>
+</div>
+<div class="flex-1 min-w-0 relative">
+<div class="flex items-center gap-2 mb-1">
+<p class="text-white text-sm font-medium truncate group-hover:text-destructive transition-colors">fix: resolve null pointer exception in auth</p>
+</div>
+<div class="flex items-center gap-2">
+<div class="flex items-center gap-1 px-2 py-0.5 rounded bg-surface-highlight border border-gray-700">
+<span class="material-symbols-outlined text-[10px] text-blue-400">visibility</span>
+<span class="text-[10px] text-gray-300 font-mono uppercase">Analyzed by: The Scout</span>
+</div>
+<span class="text-[10px] text-destructive px-2">-50 HP</span>
+</div>
+</div>
+<div class="flex items-center justify-end min-w-[100px] relative">
+<div class="px-3 py-1 rounded bg-destructive/10 border border-destructive/30 text-destructive text-xs font-bold uppercase tracking-wider shadow-neon-destructive flex items-center gap-1">
+<span class="material-symbols-outlined text-sm">warning</span> FAIL
+                                </div>
+</div>
+</div>
+<!-- Log Entry: Warning -->
+<div class="flex flex-col md:flex-row md:items-center gap-4 p-4 rounded-lg bg-surface-dark border border-[#2a3a27] hover:border-secondary/40 transition-all group">
+<div class="flex items-center gap-4 min-w-[180px]">
+<div class="size-2 rounded-full bg-secondary shadow-neon-secondary"></div>
+<div class="flex flex-col">
+<span class="font-mono text-secondary text-sm tracking-wider cursor-pointer hover:underline decoration-secondary">#c4f2e</span>
+<span class="text-[10px] text-gray-500">1h ago</span>
+</div>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex items-center gap-2 mb-1">
+<p class="text-white text-sm font-medium truncate group-hover:text-secondary transition-colors">chore: update dependencies</p>
+</div>
+<div class="flex items-center gap-2">
+<div class="flex items-center gap-1 px-2 py-0.5 rounded bg-surface-highlight border border-gray-700">
+<span class="material-symbols-outlined text-[10px] text-orange-400">shield</span>
+<span class="text-[10px] text-gray-300 font-mono uppercase">Analyzed by: The Tank</span>
+</div>
+<span class="text-[10px] text-gray-500 px-2">+5 XP</span>
+</div>
+</div>
+<div class="flex items-center justify-end min-w-[100px]">
+<div class="px-3 py-1 rounded bg-secondary/10 border border-secondary/30 text-secondary text-xs font-bold uppercase tracking-wider shadow-neon-secondary">
+                                    WARN
+                                </div>
+</div>
+</div>
+<!-- Log Entry: Pass -->
+<div class="flex flex-col md:flex-row md:items-center gap-4 p-4 rounded-lg bg-surface-dark border border-[#2a3a27] hover:border-primary/40 transition-all group">
+<div class="flex items-center gap-4 min-w-[180px]">
+<div class="size-2 rounded-full bg-primary shadow-neon"></div>
+<div class="flex flex-col">
+<span class="font-mono text-primary text-sm tracking-wider cursor-pointer hover:underline decoration-primary">#a1b2c</span>
+<span class="text-[10px] text-gray-500">2h ago</span>
+</div>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex items-center gap-2 mb-1">
+<p class="text-white text-sm font-medium truncate group-hover:text-primary transition-colors">ui: redesign user settings page</p>
+</div>
+<div class="flex items-center gap-2">
+<div class="flex items-center gap-1 px-2 py-0.5 rounded bg-surface-highlight border border-gray-700">
+<span class="material-symbols-outlined text-[10px] text-secondary">psychology</span>
+<span class="text-[10px] text-gray-300 font-mono uppercase">Analyzed by: The Sensei</span>
+</div>
+<span class="text-[10px] text-gray-500 px-2">+20 XP</span>
+</div>
+</div>
+<div class="flex items-center justify-end min-w-[100px]">
+<div class="px-3 py-1 rounded bg-primary/10 border border-primary/30 text-primary text-xs font-bold uppercase tracking-wider shadow-[0_0_10px_rgba(63,255,20,0.1)]">
+                                    PASS
+                                </div>
+</div>
+</div>
+<!-- Log Entry: Pass -->
+<div class="flex flex-col md:flex-row md:items-center gap-4 p-4 rounded-lg bg-surface-dark border border-[#2a3a27] hover:border-primary/40 transition-all group">
+<div class="flex items-center gap-4 min-w-[180px]">
+<div class="size-2 rounded-full bg-primary shadow-neon"></div>
+<div class="flex flex-col">
+<span class="font-mono text-primary text-sm tracking-wider cursor-pointer hover:underline decoration-primary">#e5f6g</span>
+<span class="text-[10px] text-gray-500">4h ago</span>
+</div>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex items-center gap-2 mb-1">
+<p class="text-white text-sm font-medium truncate group-hover:text-primary transition-colors">api: add new endpoint for user analytics</p>
+</div>
+<div class="flex items-center gap-2">
+<div class="flex items-center gap-1 px-2 py-0.5 rounded bg-surface-highlight border border-gray-700">
+<span class="material-symbols-outlined text-[10px] text-secondary">psychology</span>
+<span class="text-[10px] text-gray-300 font-mono uppercase">Analyzed by: The Sensei</span>
+</div>
+<span class="text-[10px] text-gray-500 px-2">+25 XP</span>
+</div>
+</div>
+<div class="flex items-center justify-end min-w-[100px]">
+<div class="px-3 py-1 rounded bg-primary/10 border border-primary/30 text-primary text-xs font-bold uppercase tracking-wider shadow-[0_0_10px_rgba(63,255,20,0.1)]">
+                                    PASS
+                                </div>
+</div>
+</div>
+</div>
+</main>
+</div>
+</div>
+</div>
+</body></html>

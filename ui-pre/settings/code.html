@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Mission Analysis Detail - Dev-RPG</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Space+Grotesk:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#3fff14", // Lime Green
+                        "secondary": "#00e5ff", // Cyan
+                        "destructive": "#ff00cc", // Magenta
+                        "background-light": "#f1f2f4",
+                        "background-dark": "#0f1115", // Deep Slate/Black
+                        "surface-dark": "#161b22", // Slightly lighter for cards
+                        "surface-highlight": "#1f2937",
+                    },
+                    fontFamily: {
+                        "display": ["Space Grotesk", "sans-serif"],
+                        "body": ["Inter", "sans-serif"],
+                        "mono": ["Space Grotesk", "monospace"], 
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem", 
+                        "lg": "0.5rem", 
+                        "xl": "0.75rem", 
+                        "full": "9999px"
+                    },
+                    boxShadow: {
+                        "neon": "0 0 5px theme('colors.primary'), 0 0 20px theme('colors.primary.DEFAULT / 0.3')",
+                        "neon-secondary": "0 0 5px theme('colors.secondary'), 0 0 20px theme('colors.secondary / 0.3')",
+                        "neon-destructive": "0 0 5px theme('colors.destructive'), 0 0 20px theme('colors.destructive / 0.3')",
+                    }
+                },
+            },
+        }
+    </script>
+<style>.scanlines::before {
+            content: " ";
+            display: block;
+            position: absolute;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            right: 0;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+            z-index: 50;
+            background-size: 100% 2px, 3px 100%;
+            pointer-events: none;
+        }::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0f1115; 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #1f2937; 
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #3fff14; 
+        }
+        .typing-cursor::after {
+            content: '|';
+            animation: blink 1s step-end infinite;
+        }
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+    </style>
+</head>
+<body class="relative flex h-screen w-full flex-col bg-background-dark text-white font-body overflow-hidden selection:bg-primary selection:text-black">
+<div class="scanlines pointer-events-none absolute inset-0 z-50 opacity-40 mix-blend-overlay"></div>
+<div class="flex h-full flex-col relative z-10">
+<header class="flex items-center justify-between border-b border-[#2a3a27] bg-[#0f1115]/95 backdrop-blur-sm px-6 py-4 shrink-0">
+<div class="flex items-center gap-4">
+<a class="flex items-center justify-center size-10 rounded bg-primary/10 border border-primary text-primary shadow-neon transition-transform hover:scale-105" href="#">
+<span class="material-symbols-outlined text-2xl">arrow_back</span>
+</a>
+<div>
+<h1 class="text-xl font-display font-bold tracking-widest text-white uppercase leading-none">MISSION LOG <span class="text-destructive">//</span> DETAIL</h1>
+<p class="text-xs text-gray-400 font-mono tracking-widest mt-1">ANALYSIS ID: #1B9D4 :: FAILED</p>
+</div>
+</div>
+<div class="flex items-center gap-6">
+<div class="hidden md:flex items-center gap-4 text-xs font-mono uppercase text-gray-400">
+<div class="flex items-center gap-2 px-3 py-1 rounded bg-destructive/10 border border-destructive/30 text-destructive shadow-neon-destructive">
+<span class="material-symbols-outlined text-sm">warning</span>
+                        Status: CRITICAL
+                    </div>
+</div>
+<div class="h-8 w-px bg-[#2a3a27]"></div>
+<div class="flex gap-3">
+<div class="size-10 rounded-lg bg-cover bg-center border border-[#2a3a27]" data-alt="User avatar cyberpunk style" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuDheJ4yHmGqYglVsxmaj8be-WiQx0AaaTAWuphUJDK_pJ7HFEl6JS3eCCuOTv7pW_7O6qJnySNRvYqzPgbYZdSkY_Q_krkDx4hHarqmJOAtfYThD-ymVZgECAnoTecT4P_MqB-K5ckneI4vEsqKyKnfohOBMfoQN1KHPibt6qYU9PKxz11rDW8YgITl__rcDYIdWpyNPFZHb-z04eHCAU7B37K3TewTx14xE9ujaIt6b_t114zMrXyqp-8dAf2Km6FpnsFnfs_Yn8k');"></div>
+</div>
+</div>
+</header>
+<main class="flex-1 overflow-y-auto p-6 relative">
+<div class="absolute inset-0 opacity-[0.03] z-0 pointer-events-none" style="background-image: radial-gradient(#ff00cc 1px, transparent 1px); background-size: 20px 20px;"></div>
+<div class="max-w-[1600px] mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6 relative z-10">
+<div class="lg:col-span-4 flex flex-col gap-6">
+<div class="bg-surface-dark border border-destructive/50 rounded-lg overflow-hidden shadow-neon-destructive">
+<div class="bg-destructive/10 px-4 py-3 border-b border-destructive/30 flex justify-between items-center">
+<h3 class="text-destructive font-display font-bold tracking-widest uppercase text-sm flex items-center gap-2">
+<span class="material-symbols-outlined">bug_report</span>
+                                Mission Intel
+                            </h3>
+<span class="text-[10px] font-mono text-destructive animate-pulse">LIVE FEED</span>
+</div>
+<div class="p-5 space-y-6">
+<div>
+<label class="text-[10px] uppercase tracking-widest text-gray-500 font-mono mb-1 block">Commit Message</label>
+<p class="text-white font-medium text-lg leading-tight">fix: resolve null pointer exception in auth</p>
+</div>
+<div class="grid grid-cols-2 gap-4">
+<div>
+<label class="text-[10px] uppercase tracking-widest text-gray-500 font-mono mb-1 block">Commit Hash</label>
+<div class="flex items-center gap-2 text-secondary font-mono bg-surface-highlight p-2 rounded border border-[#2a3a27]">
+<span class="material-symbols-outlined text-sm">tag</span>
+                                        1b9d4f2
+                                    </div>
+</div>
+<div>
+<label class="text-[10px] uppercase tracking-widest text-gray-500 font-mono mb-1 block">Time</label>
+<div class="flex items-center gap-2 text-gray-300 font-mono bg-surface-highlight p-2 rounded border border-[#2a3a27]">
+<span class="material-symbols-outlined text-sm">schedule</span>
+                                        32m ago
+                                    </div>
+</div>
+</div>
+<div>
+<label class="text-[10px] uppercase tracking-widest text-gray-500 font-mono mb-2 block">Operative (Author)</label>
+<div class="flex items-center gap-3 p-3 rounded bg-surface-highlight border border-[#2a3a27]">
+<div class="size-10 rounded border border-secondary bg-black/50 overflow-hidden">
+<img alt="Pixel art rogue avatar" class="size-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDjPI0TZopHxzmRo253twtAMxXjbRj6ytc9eLWZISrmadike1G9yt0uHAFIUBBXC-s_14DTz0Ti4yHQIxCtLu06JE-8Ux5maPiqsjF_jX0OEtNsQYJl2_NjzJ_kVQvSE66s7tkFG5vAF5ey3bZ6OAjjcQRGJ22ZTZx0qkkXH2GcLM3iG1s09dH8kCndpK-KgHGRWEmMOpznPMIHyBesEdySlgCgw4gyPvNCxHu2-LM9SWSJZsLEoDPu2KrLmCBlurdcaIeyR5qmY5o"/>
+</div>
+<div>
+<div class="text-secondary font-bold font-display text-sm">Bug Hunter</div>
+<div class="text-xs text-gray-500 font-mono">Lvl 28 Rogue</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="bg-surface-dark border border-[#2a3a27] rounded-lg overflow-hidden relative group hover:border-destructive/50 transition-colors">
+<div class="absolute inset-0 bg-gradient-to-br from-destructive/5 to-transparent pointer-events-none"></div>
+<div class="px-4 py-3 border-b border-[#2a3a27] flex justify-between items-center relative z-10">
+<h3 class="text-gray-400 font-display font-bold tracking-widest uppercase text-sm flex items-center gap-2">
+<span class="material-symbols-outlined text-orange-500">heart_broken</span>
+                                Boss Impact
+                            </h3>
+</div>
+<div class="p-6 flex flex-col items-center justify-center relative z-10">
+<div class="text-5xl font-display font-bold text-destructive drop-shadow-[0_0_10px_rgba(255,0,204,0.5)] mb-2 flex items-center">
+                                -50 <span class="text-2xl ml-2">HP</span>
+</div>
+<p class="text-xs text-center text-gray-500 font-mono uppercase tracking-widest">Stability Critical Hit</p>
+<div class="w-full h-3 bg-gray-800 rounded-full mt-6 overflow-hidden relative border border-gray-700">
+<div class="absolute inset-y-0 left-0 bg-primary w-[85%] opacity-30"></div>
+<div class="absolute inset-y-0 right-[15%] w-[10%] bg-destructive animate-pulse shadow-[0_0_10px_theme('colors.destructive')]"></div>
+</div>
+<div class="w-full flex justify-between mt-1 text-[10px] text-gray-500 font-mono">
+<span>0%</span>
+<span>PREV: 90%</span>
+<span>100%</span>
+</div>
+</div>
+</div>
+</div>
+<div class="lg:col-span-8 flex flex-col gap-6">
+<div class="bg-[#0d1117] border border-[#2a3a27] rounded-lg overflow-hidden flex flex-col h-[500px] shadow-2xl relative">
+<div class="pointer-events-none absolute inset-0 z-20 bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.1)_50%),linear-gradient(90deg,rgba(255,0,0,0.03),rgba(0,255,0,0.01),rgba(0,0,255,0.03))] bg-[length:100%_2px,3px_100%]"></div>
+<div class="bg-[#161b22] px-4 py-2 border-b border-[#2a3a27] flex justify-between items-center shrink-0 z-30">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-gray-500 text-sm">terminal</span>
+<span class="text-xs font-mono text-gray-300">src/auth/session.ts</span>
+</div>
+<div class="flex gap-2">
+<div class="size-3 rounded-full bg-red-500/20 border border-red-500"></div>
+<div class="size-3 rounded-full bg-yellow-500/20 border border-yellow-500"></div>
+<div class="size-3 rounded-full bg-green-500/20 border border-green-500"></div>
+</div>
+</div>
+<div class="flex-1 overflow-auto font-mono text-sm p-4 text-gray-400 relative z-10">
+<div class="flex w-full group hover:bg-[#1f2937]/50">
+<div class="w-12 text-right pr-4 text-gray-600 select-none">41</div>
+<div class="flex-1 pl-2"></div>
+</div>
+<div class="flex w-full group hover:bg-[#1f2937]/50">
+<div class="w-12 text-right pr-4 text-gray-600 select-none">44</div>
+<div class="flex-1 pl-2"><span class="text-purple-400">export</span> <span class="text-blue-400">const</span> validateSession = <span class="text-blue-400">async</span> (token) =&gt; {</div>
+</div>
+<div class="flex w-full group hover:bg-[#1f2937]/50">
+<div class="w-12 text-right pr-4 text-gray-600 select-none">45</div>
+<div class="flex-1 pl-2"> <span class="text-blue-400">const</span> decoded = <span class="text-yellow-300">decodeToken</span>(token);</div>
+</div>
+<div class="flex w-full group hover:bg-[#1f2937]/50">
+<div class="w-12 text-right pr-4 text-gray-600 select-none">46</div>
+<div class="flex-1 pl-2"> <span class="text-blue-400">const</span> user = <span class="text-blue-400">await</span> db.findUser(decoded.id);</div>
+</div>
+<div class="mt-2 mb-2 relative">
+<div class="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-2 bg-destructive text-black text-[10px] font-bold px-2 py-0.5 rounded shadow-neon-destructive">
+<span class="material-symbols-outlined text-xs">error</span> NULL REF
+                                </div>
+<div class="flex w-full bg-destructive/10 border-l-2 border-destructive">
+<div class="w-12 text-right pr-4 text-destructive/50 select-none py-1">47</div>
+<div class="flex-1 pl-2 text-destructive py-1 relative">
+<span class="line-through opacity-50">if (user.role === 'admin') {</span>
+</div>
+</div>
+<div class="flex w-full bg-primary/10 border-l-2 border-primary">
+<div class="w-12 text-right pr-4 text-primary/50 select-none py-1">47</div>
+<div class="flex-1 pl-2 text-primary py-1 font-bold">
+                                        if (user?.role === 'admin') {
+                                    </div>
+</div>
+</div>
+<div class="flex w-full group hover:bg-[#1f2937]/50">
+<div class="w-12 text-right pr-4 text-gray-600 select-none">48</div>
+<div class="flex-1 pl-2"> <span class="text-blue-400">return</span> { valid: <span class="text-orange-400">true</span>, scope: <span class="text-green-400">'full_access'</span> };</div>
+</div>
+<div class="flex w-full group hover:bg-[#1f2937]/50">
+<div class="w-12 text-right pr-4 text-gray-600 select-none">49</div>
+<div class="flex-1 pl-2">  }</div>
+</div>
+<div class="flex w-full group hover:bg-[#1f2937]/50">
+<div class="w-12 text-right pr-4 text-gray-600 select-none">50</div>
+<div class="flex-1 pl-2"> <span class="text-blue-400">return</span> { valid: <span class="text-orange-400">false</span> };</div>
+</div>
+<div class="flex w-full group hover:bg-[#1f2937]/50">
+<div class="w-12 text-right pr-4 text-gray-600 select-none">51</div>
+<div class="flex-1 pl-2">};</div>
+</div>
+</div>
+</div>
+</div>
+<div class="lg:col-span-12 mt-4 grid grid-cols-1 md:grid-cols-2 gap-6">
+<div class="relative bg-surface-dark border border-secondary/30 rounded-lg p-6 flex gap-5 items-start group hover:border-secondary transition-all shadow-neon-secondary">
+<div class="absolute -top-3 left-6 px-2 bg-background-dark text-secondary text-xs font-bold font-mono tracking-widest border border-secondary/30">
+                            THE SCOUT // ANALYSIS
+                        </div>
+<div class="size-16 rounded border-2 border-secondary p-0.5 bg-black shrink-0 relative overflow-hidden">
+<img alt="The Scout Avatar" class="size-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDjPI0TZopHxzmRo253twtAMxXjbRj6ytc9eLWZISrmadike1G9yt0uHAFIUBBXC-s_14DTz0Ti4yHQIxCtLu06JE-8Ux5maPiqsjF_jX0OEtNsQYJl2_NjzJ_kVQvSE66s7tkFG5vAF5ey3bZ6OAjjcQRGJ22ZTZx0qkkXH2GcLM3iG1s09dH8kCndpK-KgHGRWEmMOpznPMIHyBesEdySlgCgw4gyPvNCxHu2-LM9SWSJZsLEoDPu2KrLmCBlurdcaIeyR5qmY5o"/>
+<div class="absolute inset-0 bg-secondary/20 mix-blend-overlay"></div>
+</div>
+<div class="flex-1">
+<p class="text-sm text-gray-300 font-mono leading-relaxed typing-cursor">
+<span class="text-secondary font-bold">&gt;&gt;</span> Enemy weakness identified. The logic attempts to access 'role' on a potential null entity. This exposes the core to a runtime exception. Critical vulnerability detected at line 47.
+                            </p>
+</div>
+</div>
+<div class="relative bg-surface-dark border border-primary/30 rounded-lg p-6 flex gap-5 items-start group hover:border-primary transition-all shadow-neon">
+<div class="absolute -top-3 right-6 px-2 bg-background-dark text-primary text-xs font-bold font-mono tracking-widest border border-primary/30">
+                            THE SENSEI // GUIDANCE
+                        </div>
+<div class="flex-1 text-right">
+<p class="text-sm text-gray-300 font-mono leading-relaxed">
+                                A defensive stance is required, young warrior. By implementing <span class="text-primary">Optional Chaining</span>, we deflect the null value before it strikes. The shield holds, and the flow continues. <span class="text-primary font-bold">&lt;&lt;</span>
+</p>
+</div>
+<div class="size-16 rounded border-2 border-primary p-0.5 bg-black shrink-0 relative overflow-hidden">
+<img alt="The Sensei Avatar" class="size-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDmlsGlVzDQtI4g0uh50WWVOxjiqE1FPwJh_xucdW16AXnK2WSAsjcpI6iv-8mH50eLVbgeJwQdZsDqBXjbUJ3XAGQ8tpwRYdAc_vNuTjpgQmXgPBmFzFtWacVR8tqDjELgodMcvkp8oGYX5wVybD_pOZV7YlwrqokowKQfdihkR8OctOAFdhJECi1MSzXV8wzFX_2oH3sCXr_Rt9rR7XiHrLujjhCsme1BrUqjAqniHFVsEeStNs8tApWcsR8cIYTyjYI9LecXp_8"/>
+<div class="absolute inset-0 bg-primary/20 mix-blend-overlay"></div>
+</div>
+</div>
+</div>
+</div>
+<div class="h-10"></div>
+</main>
+</div>
+
+</body></html>

@@ -1,0 +1,299 @@
+{
+  "name": "Dev-RPG Code Analysis Pipeline",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "analyze-code",
+        "responseMode": "responseNode",
+        "options": {
+          "responseData": "allEntries"
+        }
+      },
+      "id": "webhook-trigger",
+      "name": "Jenkins Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1.1,
+      "position": [250, 300],
+      "webhookId": "dev-rpg-jenkins-webhook"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Extract files from webhook payload and prepare for analysis\nconst webhookData = $input.first().json;\n\nconst files = webhookData.body?.files || webhookData.files || [];\nconst commitId = webhookData.body?.commit_id || webhookData.commit_id || 'unknown';\nconst branch = webhookData.body?.branch || webhookData.branch || 'unknown';\nconst author = webhookData.body?.author || webhookData.author || 'unknown';\nconst repository = webhookData.body?.repository || webhookData.repository || 'unknown';\nconst projectId = webhookData.body?.project_id || webhookData.project_id || null;\nconst userId = webhookData.body?.user_id || webhookData.user_id || null;\n\n// If single code submission (not from Jenkins)\nif (!files.length && (webhookData.body?.code || webhookData.code)) {\n  files.push({\n    file_path: webhookData.body?.file_path || webhookData.file_path || 'untitled',\n    content: webhookData.body?.code || webhookData.code,\n    language: webhookData.body?.language || webhookData.language || null\n  });\n}\n\n// Prepare analysis items\nconst analysisItems = files.map(file => ({\n  code: file.content,\n  language: file.language,\n  file_path: file.file_path,\n  commit_id: commitId,\n  project_id: projectId,\n  user_id: userId,\n  metadata: {\n    branch,\n    author,\n    repository\n  }\n}));\n\nreturn analysisItems.map(item => ({ json: item }));"
+      },
+      "id": "prepare-files",
+      "name": "Prepare Files",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [450, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://code_quality_mcp:8000/analyze",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ code: $json.code, language: $json.language, file_path: $json.file_path, commit_id: $json.commit_id }) }}",
+        "options": {
+          "timeout": 120000,
+          "response": {
+            "response": {
+              "fullResponse": false
+            }
+          }
+        }
+      },
+      "id": "code-quality-request",
+      "name": "Code Quality MCP",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [700, 100],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://architect_mcp:8000/analyze",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ code: $json.code, language: $json.language, file_path: $json.file_path, commit_id: $json.commit_id }) }}",
+        "options": {
+          "timeout": 120000
+        }
+      },
+      "id": "architect-request",
+      "name": "Architect MCP",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [700, 250],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://event_loop_mcp:8000/analyze",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ code: $json.code, language: $json.language, file_path: $json.file_path, commit_id: $json.commit_id }) }}",
+        "options": {
+          "timeout": 120000
+        }
+      },
+      "id": "event-loop-request",
+      "name": "Event Loop MCP",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [700, 400],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://cost_mcp:8000/analyze",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ code: $json.code, language: $json.language, file_path: $json.file_path, commit_id: $json.commit_id }) }}",
+        "options": {
+          "timeout": 120000
+        }
+      },
+      "id": "cost-request",
+      "name": "Cost MCP",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [700, 550],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineAll",
+        "options": {}
+      },
+      "id": "merge-results",
+      "name": "Merge All Results",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 2.1,
+      "position": [950, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Combine all MCP analysis results into a unified report\nconst items = $input.all();\n\n// Extract data from each MCP response\nlet codeQuality = null;\nlet architecture = null;\nlet eventLoop = null;\nlet costAnalysis = null;\nlet metadata = {};\n\nfor (const item of items) {\n  const data = item.json;\n  \n  // Get metadata from first item\n  if (data.metadata) {\n    metadata = data.metadata;\n  }\n  \n  // Identify which MCP result this is based on available fields\n  if (data.score !== undefined && data.issues !== undefined) {\n    codeQuality = data;\n  } else if (data.architecture_score !== undefined) {\n    architecture = data;\n  } else if (data.event_loop_score !== undefined) {\n    eventLoop = data;\n  } else if (data.efficiency_score !== undefined) {\n    costAnalysis = data;\n  }\n}\n\n// Calculate overall score (weighted average)\nconst scores = [];\nif (codeQuality?.score !== undefined) {\n  scores.push({ name: 'code_quality', score: codeQuality.score, weight: 0.3 });\n}\nif (architecture?.architecture_score !== undefined) {\n  scores.push({ name: 'architecture', score: architecture.architecture_score, weight: 0.25 });\n}\nif (eventLoop?.event_loop_score !== undefined) {\n  scores.push({ name: 'event_loop', score: eventLoop.event_loop_score, weight: 0.2 });\n}\nif (costAnalysis?.efficiency_score !== undefined) {\n  scores.push({ name: 'efficiency', score: costAnalysis.efficiency_score, weight: 0.25 });\n}\n\nlet overallScore = 0;\nif (scores.length > 0) {\n  const totalWeight = scores.reduce((sum, s) => sum + s.weight, 0);\n  overallScore = Math.round(\n    scores.reduce((sum, s) => sum + (s.score * s.weight), 0) / totalWeight\n  );\n}\n\n// Determine overall status\nlet status = 'excellent';\nif (overallScore < 50) status = 'critical';\nelse if (overallScore < 70) status = 'needs_improvement';\nelse if (overallScore < 85) status = 'good';\n\n// Calculate XP\nconst xpEarned = Math.round(overallScore * 10);\n\n// Determine badges\nconst badgesEarned = [];\nif (codeQuality?.score >= 90) badgesEarned.push('Clean Coder');\nif (architecture?.architecture_score >= 90) badgesEarned.push('Architect Master');\nif (eventLoop?.event_loop_score >= 90) badgesEarned.push('Async Ninja');\nif (costAnalysis?.efficiency_score >= 90) badgesEarned.push('Optimizer');\nif (overallScore >= 95) badgesEarned.push('Code Legend');\nif (overallScore === 100) badgesEarned.push('Perfectionist');\n\n// Build unified report\nconst report = {\n  report_id: `RPT-${Date.now()}`,\n  generated_at: new Date().toISOString(),\n  overall_score: overallScore,\n  status: status,\n  metadata: metadata,\n  \n  scores_breakdown: scores.map(s => ({\n    category: s.name,\n    score: s.score,\n    weight: `${Math.round(s.weight * 100)}%`\n  })),\n  \n  code_quality: codeQuality ? {\n    score: codeQuality.score,\n    issues_count: (codeQuality.issues || []).length,\n    issues: codeQuality.issues || [],\n    summary: codeQuality.summary || 'Analysis completed'\n  } : null,\n  \n  architecture: architecture ? {\n    score: architecture.architecture_score,\n    circular_dependencies: architecture.circular_dependencies || [],\n    layer_violations: architecture.layer_violations || [],\n    dependency_issues_count: (architecture.dependency_issues || []).length,\n    summary: architecture.summary || 'Analysis completed',\n    recommendations: architecture.recommendations || []\n  } : null,\n  \n  event_loop: eventLoop ? {\n    score: eventLoop.event_loop_score,\n    blocking_operations_count: eventLoop.total_blocking_calls || 0,\n    freeze_risk: eventLoop.estimated_freeze_risk || 'unknown',\n    blocking_operations: eventLoop.blocking_operations || [],\n    summary: eventLoop.summary || 'Analysis completed'\n  } : null,\n  \n  cost_analysis: costAnalysis ? {\n    score: costAnalysis.efficiency_score,\n    time_complexity: costAnalysis.overall_time_complexity || 'O(?)',\n    space_complexity: costAnalysis.overall_space_complexity || 'O(?)',\n    cloud_cost_impact: costAnalysis.cloud_cost_impact || 'Unknown',\n    estimated_monthly_impact: costAnalysis.estimated_monthly_impact || 'N/A',\n    optimizations: costAnalysis.optimizations || [],\n    summary: costAnalysis.summary || 'Analysis completed'\n  } : null,\n  \n  // RPG-style summary for gamification\n  rpg_summary: {\n    xp_earned: xpEarned,\n    badges_earned: badgesEarned,\n    level_up: overallScore >= 90,\n    achievement_unlocked: badgesEarned.length > 0\n  }\n};\n\nreturn [{ json: report }];"
+      },
+      "id": "build-report",
+      "name": "Build Unified Report",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1150, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://backend:3210/api/reports",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json) }}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "send-to-backend",
+      "name": "Send to Backend API",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [1350, 300],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $('Build Unified Report').item.json }}",
+        "options": {}
+      },
+      "id": "respond-webhook",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [1550, 300]
+    }
+  ],
+  "connections": {
+    "Jenkins Webhook": {
+      "main": [
+        [
+          {
+            "node": "Prepare Files",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Files": {
+      "main": [
+        [
+          {
+            "node": "Code Quality MCP",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Architect MCP",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Event Loop MCP",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Cost MCP",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code Quality MCP": {
+      "main": [
+        [
+          {
+            "node": "Merge All Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Architect MCP": {
+      "main": [
+        [
+          {
+            "node": "Merge All Results",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Event Loop MCP": {
+      "main": [
+        [
+          {
+            "node": "Merge All Results",
+            "type": "main",
+            "index": 2
+          }
+        ]
+      ]
+    },
+    "Cost MCP": {
+      "main": [
+        [
+          {
+            "node": "Merge All Results",
+            "type": "main",
+            "index": 3
+          }
+        ]
+      ]
+    },
+    "Merge All Results": {
+      "main": [
+        [
+          {
+            "node": "Build Unified Report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Unified Report": {
+      "main": [
+        [
+          {
+            "node": "Send to Backend API",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send to Backend API": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true,
+    "callerPolicy": "any",
+    "errorWorkflow": ""
+  },
+  "staticData": null,
+  "tags": [
+    {
+      "name": "dev-rpg",
+      "id": "1"
+    },
+    {
+      "name": "ci-cd",
+      "id": "2"
+    },
+    {
+      "name": "code-analysis",
+      "id": "3"
+    }
+  ],
+  "pinData": {},
+  "versionId": "2.0.0"
+}

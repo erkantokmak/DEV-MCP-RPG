@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>The Forge - Settings</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Space+Grotesk:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#3fff14", // Lime Green
+                        "secondary": "#00e5ff", // Cyan
+                        "destructive": "#ff00cc", // Magenta
+                        "background-light": "#f1f2f4",
+                        "background-dark": "#0f1115", // Deep Slate/Black
+                        "surface-dark": "#161b22", // Slightly lighter for cards
+                        "surface-highlight": "#1f2937",
+                        "surface-accent": "#2a3a27",
+                    },
+                    fontFamily: {
+                        "display": ["Space Grotesk", "sans-serif"],
+                        "body": ["Inter", "sans-serif"],
+                        "mono": ["Space Grotesk", "monospace"],
+                    },
+                    boxShadow: {
+                        "neon": "0 0 5px theme('colors.primary'), 0 0 20px theme('colors.primary.DEFAULT / 0.3')",
+                        "neon-secondary": "0 0 5px theme('colors.secondary'), 0 0 20px theme('colors.secondary / 0.3')",
+                        "neon-destructive": "0 0 5px theme('colors.destructive'), 0 0 20px theme('colors.destructive / 0.3')",
+                    },
+                    backgroundImage: {
+                        "grid-pattern": "radial-gradient(#3fff14 1px, transparent 1px)",
+                    }
+                },
+            },
+        }
+    </script>
+<style>.scanlines::before {
+            content: " ";
+            display: block;
+            position: absolute;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            right: 0;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+            z-index: 50;
+            background-size: 100% 2px, 3px 100%;
+            pointer-events: none;
+        }::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0f1115; 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #1f2937; 
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #3fff14; 
+        }input[type=range] {
+            -webkit-appearance: none;
+            background: transparent;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 20px;
+            width: 10px;
+            border-radius: 2px;
+            background: #3fff14;
+            cursor: pointer;
+            margin-top: -8px;
+            box-shadow: 0 0 10px #3fff14;
+            border: 1px solid #fff;
+        }
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 4px;
+            cursor: pointer;
+            background: #2a3a27;
+            border-radius: 2px;
+        }
+        input[type=range]:focus {
+            outline: none;
+        }.cyber-toggle {
+            position: relative;
+            width: 44px;
+            height: 22px;
+            appearance: none;
+            background: #1f2937;
+            border: 1px solid #4b5563;
+            border-radius: 2px;
+            transition: 0.3s;
+            cursor: pointer;
+        }
+        .cyber-toggle::after {
+            content: '';
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 16px;
+            height: 16px;
+            background: #9ca3af;
+            border-radius: 1px;
+            transition: 0.3s;
+        }
+        .cyber-toggle:checked {
+            background: rgba(63, 255, 20, 0.1);
+            border-color: #3fff14;
+            box-shadow: 0 0 10px rgba(63, 255, 20, 0.2);
+        }
+        .cyber-toggle:checked::after {
+            left: 24px;
+            background: #3fff14;
+            box-shadow: 0 0 5px #3fff14;
+        }
+        .cyber-toggle-secondary:checked {
+            background: rgba(0, 229, 255, 0.1);
+            border-color: #00e5ff;
+            box-shadow: 0 0 10px rgba(0, 229, 255, 0.2);
+        }
+        .cyber-toggle-secondary:checked::after {
+            background: #00e5ff;
+            box-shadow: 0 0 5px #00e5ff;
+        }
+        .corner-bracket {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            border-style: solid;
+            border-color: #3fff14;
+            border-width: 0;
+            opacity: 0.5;
+            transition: opacity 0.3s;
+        }
+        .group:hover .corner-bracket {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body class="relative flex h-screen w-full flex-col bg-background-dark text-white font-body overflow-hidden selection:bg-primary selection:text-black">
+<div class="scanlines pointer-events-none absolute inset-0 z-50 opacity-40 mix-blend-overlay"></div>
+<div class="flex h-full flex-col relative z-10">
+<header class="flex items-center justify-between border-b border-surface-accent bg-[#0f1115]/95 backdrop-blur-sm px-6 py-4 shrink-0">
+<div class="flex items-center gap-4">
+<div class="flex items-center justify-center size-10 rounded bg-primary/10 border border-primary text-primary shadow-neon">
+<span class="material-symbols-outlined text-2xl">build</span>
+</div>
+<div>
+<h1 class="text-xl font-display font-bold tracking-widest text-white uppercase leading-none">THE FORGE <span class="text-primary">//</span> SETTINGS</h1>
+<p class="text-xs text-gray-400 font-mono tracking-widest mt-1">CONFIG.MODE :: ACTIVE</p>
+</div>
+</div>
+<div class="flex items-center gap-6">
+<a class="text-xs font-mono text-gray-500 hover:text-primary transition-colors flex items-center gap-2 group" href="#">
+<span class="material-symbols-outlined text-sm group-hover:-translate-x-1 transition-transform">arrow_back</span>
+                    RETURN TO DASHBOARD
+                </a>
+<div class="h-8 w-px bg-surface-accent"></div>
+<div class="size-10 rounded-lg bg-cover bg-center border border-surface-accent" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuDheJ4yHmGqYglVsxmaj8be-WiQx0AaaTAWuphUJDK_pJ7HFEl6JS3eCCuOTv7pW_7O6qJnySNRvYqzPgbYZdSkY_Q_krkDx4hHarqmJOAtfYThD-ymVZgECAnoTecT4P_MqB-K5ckneI4vEsqKyKnfohOBMfoQN1KHPibt6qYU9PKxz11rDW8YgITl__rcDYIdWpyNPFZHb-z04eHCAU7B37K3TewTx14xE9ujaIt6b_t114zMrXyqp-8dAf2Km6FpnsFnfs_Yn8k');"></div>
+</div>
+</header>
+<div class="flex flex-1 overflow-hidden">
+<aside class="w-64 flex flex-col border-r border-surface-accent bg-[#0f1115] shrink-0">
+<nav class="flex-1 py-6 px-4 space-y-1">
+<h3 class="px-2 text-[10px] font-mono uppercase text-gray-500 tracking-widest mb-4">System Controls</h3>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded bg-primary/10 border border-primary/30 text-primary group shadow-[0_0_10px_rgba(63,255,20,0.1)]" href="#">
+<span class="material-symbols-outlined text-lg">smart_toy</span>
+<span class="text-sm font-bold uppercase tracking-wider font-display">Agent Protocols</span>
+<span class="ml-auto w-1.5 h-1.5 rounded-full bg-primary shadow-neon"></span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded text-gray-400 hover:text-white hover:bg-white/5 group transition-colors" href="#">
+<span class="material-symbols-outlined text-lg">shield_with_heart</span>
+<span class="text-sm font-bold uppercase tracking-wider font-display">Boss Health</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded text-gray-400 hover:text-white hover:bg-white/5 group transition-colors" href="#">
+<span class="material-symbols-outlined text-lg">tune</span>
+<span class="text-sm font-bold uppercase tracking-wider font-display">Interface</span>
+</a>
+<div class="my-4 border-t border-surface-accent"></div>
+<h3 class="px-2 text-[10px] font-mono uppercase text-gray-500 tracking-widest mb-4">Account</h3>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded text-gray-400 hover:text-white hover:bg-white/5 group transition-colors" href="#">
+<span class="material-symbols-outlined text-lg">badge</span>
+<span class="text-sm font-bold uppercase tracking-wider font-display">Profile</span>
+</a>
+</nav>
+<div class="p-4 border-t border-surface-accent bg-surface-dark/50">
+<div class="flex justify-between items-center text-[10px] font-mono uppercase text-gray-500 mb-2">
+<span>CPU Load</span>
+<span class="text-primary">12%</span>
+</div>
+<div class="h-1 w-full bg-gray-800 rounded-full overflow-hidden">
+<div class="h-full bg-primary w-[12%] shadow-neon"></div>
+</div>
+</div>
+</aside>
+<main class="flex-1 flex flex-col bg-[#0f1115] relative overflow-y-auto">
+<div class="absolute inset-0 z-0 pointer-events-none opacity-[0.05]" style="background-image: radial-gradient(#3fff14 1px, transparent 1px); background-size: 24px 24px;"></div>
+<div class="max-w-5xl w-full mx-auto p-8 z-10 space-y-12">
+<section>
+<div class="flex items-end justify-between mb-6 pb-2 border-b border-surface-accent">
+<div>
+<h2 class="text-2xl font-display font-bold text-white uppercase tracking-wider flex items-center gap-3">
+<span class="text-primary">01 //</span> Agent Protocols
+                                </h2>
+<p class="text-sm text-gray-500 mt-1 font-mono">Manage active MCP agents and sensitivity levels.</p>
+</div>
+<button class="text-xs bg-surface-highlight hover:bg-surface-accent px-3 py-1 rounded border border-gray-700 text-gray-300 font-mono uppercase">Reset Defaults</button>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+<div class="group relative bg-surface-dark border border-surface-accent p-5 rounded-lg hover:border-primary/50 transition-all">
+<div class="corner-bracket top-0 left-0 border-t-2 border-l-2 rounded-tl-sm"></div>
+<div class="corner-bracket bottom-0 right-0 border-b-2 border-r-2 rounded-br-sm"></div>
+<div class="flex justify-between items-start mb-4">
+<div class="flex items-center gap-3">
+<div class="size-10 rounded bg-primary/10 border border-primary/30 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined">psychology</span>
+</div>
+<div>
+<h3 class="font-display font-bold text-white uppercase">The Sensei</h3>
+<span class="text-[10px] text-primary font-mono bg-primary/10 px-1 rounded">CODE QUALITY</span>
+</div>
+</div>
+<input checked="" class="cyber-toggle" type="checkbox"/>
+</div>
+<p class="text-xs text-gray-400 mb-4 h-8 leading-snug">Analyzes code structure, complexity, and architectural patterns.</p>
+<div class="space-y-2">
+<div class="flex justify-between text-[10px] font-mono uppercase text-gray-500">
+<span>Strictness</span>
+<span class="text-primary">85%</span>
+</div>
+<input class="w-full" max="100" min="0" type="range" value="85"/>
+</div>
+</div>
+<div class="group relative bg-surface-dark border border-surface-accent p-5 rounded-lg hover:border-secondary/50 transition-all">
+<div class="corner-bracket top-0 left-0 border-t-2 border-l-2 border-secondary rounded-tl-sm"></div>
+<div class="corner-bracket bottom-0 right-0 border-b-2 border-r-2 border-secondary rounded-br-sm"></div>
+<div class="flex justify-between items-start mb-4">
+<div class="flex items-center gap-3">
+<div class="size-10 rounded bg-secondary/10 border border-secondary/30 flex items-center justify-center text-secondary">
+<span class="material-symbols-outlined">visibility</span>
+</div>
+<div>
+<h3 class="font-display font-bold text-white uppercase">The Scout</h3>
+<span class="text-[10px] text-secondary font-mono bg-secondary/10 px-1 rounded">SECURITY</span>
+</div>
+</div>
+<input checked="" class="cyber-toggle cyber-toggle-secondary" type="checkbox"/>
+</div>
+<p class="text-xs text-gray-400 mb-4 h-8 leading-snug">Detects vulnerabilities, secrets, and auth risks in real-time.</p>
+<div class="space-y-2">
+<div class="flex justify-between text-[10px] font-mono uppercase text-gray-500">
+<span>Scan Depth</span>
+<span class="text-secondary">High</span>
+</div>
+<div class="relative h-1 bg-gray-800 rounded w-full">
+<div class="absolute top-0 left-0 h-full bg-secondary w-3/4 shadow-[0_0_8px_#00e5ff]"></div>
+<div class="absolute top-1/2 -translate-y-1/2 left-3/4 size-3 bg-secondary border border-white shadow-[0_0_8px_#00e5ff] cursor-pointer"></div>
+</div>
+</div>
+</div>
+<div class="group relative bg-surface-dark border border-surface-accent p-5 rounded-lg hover:border-orange-500/50 transition-all">
+<div class="flex justify-between items-start mb-4">
+<div class="flex items-center gap-3">
+<div class="size-10 rounded bg-orange-500/10 border border-orange-500/30 flex items-center justify-center text-orange-500">
+<span class="material-symbols-outlined">shield</span>
+</div>
+<div>
+<h3 class="font-display font-bold text-white uppercase">The Tank</h3>
+<span class="text-[10px] text-orange-500 font-mono bg-orange-500/10 px-1 rounded">INFRASTRUCTURE</span>
+</div>
+</div>
+<input checked="" class="cyber-toggle" style="filter: hue-rotate(90deg);" type="checkbox"/>
+</div>
+<p class="text-xs text-gray-400 mb-4 h-8 leading-snug">Monitors docker containers, build pipelines, and deployment health.</p>
+<div class="space-y-2">
+<div class="flex justify-between text-[10px] font-mono uppercase text-gray-500">
+<span>Threshold</span>
+<span class="text-orange-500">Standard</span>
+</div>
+<div class="relative h-1 bg-gray-800 rounded w-full">
+<div class="absolute top-0 left-0 h-full bg-orange-500 w-1/2 shadow-[0_0_8px_orange]"></div>
+<div class="absolute top-1/2 -translate-y-1/2 left-1/2 size-3 bg-orange-500 border border-white cursor-pointer"></div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<section>
+<div class="flex items-end justify-between mb-6 pb-2 border-b border-surface-accent">
+<div>
+<h2 class="text-2xl font-display font-bold text-white uppercase tracking-wider flex items-center gap-3">
+<span class="text-destructive">02 //</span> Boss Health Calibration
+                                </h2>
+<p class="text-sm text-gray-500 mt-1 font-mono">Define stability thresholds. Dropping below these values triggers RPG events.</p>
+</div>
+</div>
+<div class="bg-surface-dark border border-surface-accent p-8 rounded-lg relative overflow-hidden">
+<div class="absolute top-0 right-0 p-4 opacity-10">
+<span class="material-symbols-outlined text-9xl">ecg_heart</span>
+</div>
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-10 relative z-10">
+<div class="space-y-8">
+<div>
+<div class="flex justify-between mb-2">
+<label class="text-xs font-bold uppercase tracking-wider text-primary">Stable Threshold</label>
+<span class="font-mono text-primary">80%</span>
+</div>
+<input class="w-full" type="range" value="80"/>
+<p class="text-[10px] text-gray-500 mt-1">Health above 80% is considered robust.</p>
+</div>
+<div>
+<div class="flex justify-between mb-2">
+<label class="text-xs font-bold uppercase tracking-wider text-secondary">Warning Threshold</label>
+<span class="font-mono text-secondary">50%</span>
+</div>
+<div class="relative h-1 bg-gray-800 rounded w-full">
+<div class="absolute top-0 left-0 h-full bg-secondary w-1/2 shadow-neon-secondary"></div>
+<div class="absolute top-1/2 -translate-y-1/2 left-1/2 size-4 bg-secondary border border-white shadow-neon-secondary cursor-pointer"></div>
+</div>
+<p class="text-[10px] text-gray-500 mt-1">Health between 30% and 50% triggers warning events.</p>
+</div>
+<div>
+<div class="flex justify-between mb-2">
+<label class="text-xs font-bold uppercase tracking-wider text-destructive">Critical Failure</label>
+<span class="font-mono text-destructive">30%</span>
+</div>
+<div class="relative h-1 bg-gray-800 rounded w-full">
+<div class="absolute top-0 left-0 h-full bg-destructive w-[30%] shadow-neon-destructive"></div>
+<div class="absolute top-1/2 -translate-y-1/2 left-[30%] size-4 bg-destructive border border-white shadow-neon-destructive cursor-pointer"></div>
+</div>
+<p class="text-[10px] text-gray-500 mt-1">Below 30% initiates lockdown protocols.</p>
+</div>
+</div>
+<div class="flex flex-col justify-center border-l border-surface-accent pl-10">
+<h4 class="text-xs font-mono uppercase text-gray-400 mb-4 tracking-widest">Preview Visualization</h4>
+<div class="relative h-12 w-full bg-[#1e232b] border border-[#2a3a27] rounded overflow-hidden flex gap-1 p-1 mb-2">
+<div class="h-full bg-gradient-to-r from-destructive via-secondary to-primary w-[80%] rounded-sm shadow-neon relative overflow-hidden">
+<div class="absolute inset-0 w-full h-full" style="background-image: linear-gradient(45deg,rgba(0,0,0,.1) 25%,transparent 25%,transparent 50%,rgba(0,0,0,.1) 50%,rgba(0,0,0,.1) 75%,transparent 75%,transparent); background-size: 1rem 1rem;"></div>
+</div>
+<div class="absolute top-0 bottom-0 left-[30%] w-px border-l border-dashed border-white/50 z-20">
+<span class="absolute -top-3 left-1 text-[8px] font-mono text-destructive">CRIT</span>
+</div>
+<div class="absolute top-0 bottom-0 left-[50%] w-px border-l border-dashed border-white/50 z-20">
+<span class="absolute -top-3 left-1 text-[8px] font-mono text-secondary">WARN</span>
+</div>
+<div class="absolute top-0 bottom-0 left-[80%] w-px border-l border-dashed border-white/50 z-20">
+<span class="absolute -top-3 left-1 text-[8px] font-mono text-primary">STABLE</span>
+</div>
+</div>
+<div class="text-center">
+<span class="text-2xl font-display font-bold text-primary">80% HP</span>
+</div>
+</div>
+</div>
+</div>
+</section>
+<section>
+<div class="flex items-end justify-between mb-6 pb-2 border-b border-surface-accent">
+<div>
+<h2 class="text-2xl font-display font-bold text-white uppercase tracking-wider flex items-center gap-3">
+<span class="text-gray-500">03 //</span> Visual Interface
+                                </h2>
+<p class="text-sm text-gray-500 mt-1 font-mono">Adjust the cyberpunk aesthetic parameters.</p>
+</div>
+</div>
+<div class="bg-surface-dark border border-surface-accent p-6 rounded-lg">
+<div class="space-y-6">
+<div class="flex items-center justify-between group">
+<div class="flex items-center gap-4">
+<div class="p-2 rounded bg-surface-highlight text-gray-400 group-hover:text-primary transition-colors">
+<span class="material-symbols-outlined">blur_on</span>
+</div>
+<div>
+<h4 class="font-bold text-sm uppercase tracking-wider">CRT Scanlines</h4>
+<p class="text-xs text-gray-500 font-mono">Enable retro overlay effect.</p>
+</div>
+</div>
+<input checked="" class="cyber-toggle" type="checkbox"/>
+</div>
+<div class="h-px bg-surface-accent w-full"></div>
+<div class="flex items-center justify-between group">
+<div class="flex items-center gap-4">
+<div class="p-2 rounded bg-surface-highlight text-gray-400 group-hover:text-primary transition-colors">
+<span class="material-symbols-outlined">wb_twilight</span>
+</div>
+<div>
+<h4 class="font-bold text-sm uppercase tracking-wider">Neon Glow Intensity</h4>
+<p class="text-xs text-gray-500 font-mono">Adjust bloom strength for UI elements.</p>
+</div>
+</div>
+<div class="w-48">
+<input class="w-full" type="range" value="70"/>
+</div>
+</div>
+<div class="h-px bg-surface-accent w-full"></div>
+<div class="flex items-center justify-between group">
+<div class="flex items-center gap-4">
+<div class="p-2 rounded bg-surface-highlight text-gray-400 group-hover:text-primary transition-colors">
+<span class="material-symbols-outlined">volume_up</span>
+</div>
+<div>
+<h4 class="font-bold text-sm uppercase tracking-wider">Interface Sounds</h4>
+<p class="text-xs text-gray-500 font-mono">Clicks, hums, and error alerts.</p>
+</div>
+</div>
+<input class="cyber-toggle" type="checkbox"/>
+</div>
+</div>
+</div>
+</section>
+<div class="flex justify-end pt-4 pb-12">
+<button class="bg-primary hover:bg-primary/90 text-black font-display font-bold uppercase tracking-widest px-8 py-4 rounded shadow-neon hover:shadow-[0_0_30px_theme('colors.primary')] transition-all transform hover:-translate-y-1 flex items-center gap-2">
+<span class="material-symbols-outlined">save</span>
+                            Save Configuration
+                        </button>
+</div>
+</div>
+</main>
+</div>
+</div>
+
+</body></html>
