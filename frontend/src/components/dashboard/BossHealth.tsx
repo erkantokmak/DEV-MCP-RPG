@@ -49,11 +49,10 @@ function getBossType(healthPercent: number): { name: string; type: string; weakn
 }
 
 export function BossHealth() {
-  const { data: health, loading: healthLoading, error: healthError } = useHealth()
+  const { data: health, loading: healthLoading } = useHealth()
   const { data: mcpStatus, loading: mcpLoading } = useMCPStatus()
   
   const loading = healthLoading || mcpLoading
-  const error = healthError
   
   const bossHealth = calculateBossHealth(mcpStatus)
   const hpPercentage = (bossHealth.current / bossHealth.max) * 100

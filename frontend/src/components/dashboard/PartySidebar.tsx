@@ -119,7 +119,7 @@ export function PartySidebar() {
           </div>
         )}
         
-        {partyMembers.map((member, index) => (
+        {partyMembers.map((member) => (
           <Link
             key={member.id}
             to={`/character/${member.id}`}

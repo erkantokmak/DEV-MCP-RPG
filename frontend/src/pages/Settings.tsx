@@ -102,19 +102,27 @@ export function Settings() {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!loginUsername.trim()) return
-    await login(loginUsername.trim())
-    setLoginUsername('')
+    try {
+      await login(loginUsername.trim())
+      setLoginUsername('')
+    } catch {
+      // Error is handled by context
+    }
   }
   
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!registerForm.username.trim()) return
-    await register({
-      username: registerForm.username.trim(),
-      email: registerForm.email.trim() || undefined,
-      display_name: registerForm.displayName.trim() || undefined,
-    })
-    setRegisterForm({ username: '', email: '', displayName: '' })
+    try {
+      await register({
+        username: registerForm.username.trim(),
+        email: registerForm.email.trim() || undefined,
+        display_name: registerForm.displayName.trim() || undefined,
+      })
+      setRegisterForm({ username: '', email: '', displayName: '' })
+    } catch {
+      // Error is handled by context
+    }
   }
 
   return (

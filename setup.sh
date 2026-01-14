@@ -70,7 +70,7 @@ wait_for_service() {
 # ===========================================
 # Step 1: Check Prerequisites
 # ===========================================
-log_step "1/6" "Checking prerequisites..."
+log_step "1/7" "Checking prerequisites..."
 
 # Check Docker
 if ! command -v docker &> /dev/null; then
@@ -98,6 +98,52 @@ if ! docker ps > /dev/null 2>&1; then
     exit 1
 fi
 
+# ===========================================
+# Step 2: Cleanup Previous Installation
+# ===========================================
+log_step "2/7" "Cleaning up previous installation..."
+
+cd "$PROJECT_DIR"
+
+# Stop and remove existing containers
+if $COMPOSE_CMD ps -q 2>/dev/null | grep -q .; then
+    echo "Stopping existing containers..."
+    $COMPOSE_CMD down --remove-orphans 2>/dev/null || true
+    log_success "Stopped existing containers"
+else
+    log_success "No existing containers to stop"
+fi
+
+# Remove dev-rpg containers (in case they were started differently)
+EXISTING_CONTAINERS=$(docker ps -a --filter "name=dev-rpg" -q 2>/dev/null)
+if [ -n "$EXISTING_CONTAINERS" ]; then
+    echo "Removing dev-rpg containers..."
+    docker rm -f $EXISTING_CONTAINERS 2>/dev/null || true
+    log_success "Removed dev-rpg containers"
+fi
+
+# Remove dev-rpg network
+if docker network ls --filter "name=mcpcicd_dev-rpg-network" -q | grep -q .; then
+    echo "Removing existing network..."
+    docker network rm mcpcicd_dev-rpg-network 2>/dev/null || true
+    log_success "Removed existing network"
+fi
+
+# Optional: Remove volumes (ask user)
+echo ""
+echo -e "${YELLOW}Do you want to remove existing data volumes? (y/N)${NC}"
+echo "Warning: This will delete all database data!"
+read -t 10 -n 1 REMOVE_VOLUMES || REMOVE_VOLUMES="n"
+echo ""
+
+if [[ "$REMOVE_VOLUMES" =~ ^[Yy]$ ]]; then
+    echo "Removing volumes..."
+    docker volume rm mcpcicd_postgres_data mcpcicd_n8n_data mcpcicd_ollama_models 2>/dev/null || true
+    log_success "Removed data volumes"
+else
+    log_success "Keeping existing data volumes"
+fi
+
 # Check available disk space (need at least 5GB)
 AVAILABLE_SPACE=$(df -BG "$PROJECT_DIR" | awk 'NR==2 {print $4}' | sed 's/G//')
 if [ "$AVAILABLE_SPACE" -lt 5 ]; then
@@ -107,7 +153,7 @@ fi
 # ===========================================
 # Step 2: Configure Groq API Key
 # ===========================================
-log_step "2/6" "Configuring Groq API..."
+log_step "3/7" "Configuring Groq API..."
 
 # Check for API key file
 if [ -f "$PROJECT_DIR/apikey" ]; then
@@ -138,7 +184,7 @@ fi
 # ===========================================
 # Step 3: Create Environment File
 # ===========================================
-log_step "3/6" "Creating environment configuration..."
+log_step "4/7" "Creating environment configuration..."
 
 # Generate random password for PostgreSQL
 RANDOM_PASS=$(openssl rand -hex 8 2>/dev/null || head /dev/urandom | tr -dc A-Za-z0-9 | head -c 16)
@@ -173,7 +219,7 @@ log_success "Created .env file with Groq API configuration"
 # ===========================================
 # Step 4: Build Docker Images (Sequential)
 # ===========================================
-log_step "4/6" "Building Docker images..."
+log_step "5/7" "Building Docker images..."
 
 cd "$PROJECT_DIR"
 
@@ -202,7 +248,7 @@ log_success "All Docker images built successfully"
 # ===========================================
 # Step 5: Start Services (Sequential)
 # ===========================================
-log_step "5/6" "Starting services..."
+log_step "6/7" "Starting services..."
 
 # Start PostgreSQL first
 echo "Starting PostgreSQL..."
@@ -249,7 +295,7 @@ log_success "All services started"
 # ===========================================
 # Step 6: Verify Services
 # ===========================================
-log_step "6/6" "Verifying services..."
+log_step "7/7" "Verifying services..."
 
 echo "Waiting for services to initialize..."
 sleep 10
