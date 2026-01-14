@@ -1,30 +1,26 @@
 # ===========================================
 # DEV-RPG - CI/CD Analysis Platform
 # All ports in range 3200-3300
+# Uses Groq API for LLM (free tier, cloud-based)
 # ===========================================
 
 services:
   # ===========================================
-  # AI ENGINE - Ollama Local LLM
+  # AI ENGINE - Ollama Local LLM (DISABLED - Using Groq API)
+  # Uncomment below to use local Ollama instead of Groq
   # ===========================================
-  ollama:
-    image: ollama/ollama:latest
-    container_name: dev-rpg-ollama
-    ports:
-      - "3260:11434"
-    volumes:
-      - ollama_models:/root/.ollama
-    environment:
-      - OLLAMA_HOST=0.0.0.0
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:11434/api/tags"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
-      start_period: 60s
-    networks:
-      - dev-rpg-network
+  # ollama:
+  #   image: ollama/ollama:latest
+  #   container_name: dev-rpg-ollama
+  #   ports:
+  #     - "3260:11434"
+  #   volumes:
+  #     - ollama_models:/root/.ollama
+  #   environment:
+  #     - OLLAMA_HOST=0.0.0.0
+  #   restart: unless-stopped
+  #   networks:
+  #     - dev-rpg-network
 
   # ===========================================
   # ORCHESTRATOR - n8n Workflow Engine
@@ -58,13 +54,13 @@ services:
       - dev-rpg-network
 
   # ===========================================
-  # DATABASE - PostgreSQL
+  # DATABASE - PostgreSQL (Port 3231 - çakışma önlendi)
   # ===========================================
   postgres:
     image: postgres:15-alpine
     container_name: dev-rpg-postgres
     ports:
-      - "3230:5432"
+      - "127.0.0.1:3231:5432"
     environment:
       - POSTGRES_DB=dev_rpg
       - POSTGRES_USER=dev_rpg_user
@@ -127,9 +123,9 @@ services:
 
   # ===========================================
   # MCP AGENTS - AI-Powered Microservices
+  # (Ollama bağımlılığı basitleştirildi - service_started)
   # ===========================================
   
-  # Lighthouse MCP - Performance Analysis (Port 3201)
   lighthouse_mcp:
     build:
       context: ./mcp-agents/lighthouse_mcp
@@ -150,7 +146,6 @@ services:
     networks:
       - dev-rpg-network
 
-  # Code Quality MCP - Clean Code Analysis (Port 3202)
   code_quality_mcp:
     build:
       context: ./mcp-agents/code_quality_mcp
@@ -161,11 +156,9 @@ services:
     environment:
       - SERVICE_NAME=code_quality_mcp
       - PORT=8000
-      - OLLAMA_URL=http://ollama:11434
-      - OLLAMA_MODEL=llama3
-    depends_on:
-      ollama:
-        condition: service_healthy
+      - LLM_PROVIDER=groq
+      - GROQ_API_KEY=${GROQ_API_KEY}
+      - GROQ_MODEL=llama-3.1-8b-instant
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
@@ -176,7 +169,6 @@ services:
     networks:
       - dev-rpg-network
 
-  # Architect MCP - Architecture Analysis (Port 3203)
   architect_mcp:
     build:
       context: ./mcp-agents/architect_mcp
@@ -187,11 +179,9 @@ services:
     environment:
       - SERVICE_NAME=architect_mcp
       - PORT=8000
-      - OLLAMA_URL=http://ollama:11434
-      - OLLAMA_MODEL=llama3
-    depends_on:
-      ollama:
-        condition: service_healthy
+      - LLM_PROVIDER=groq
+      - GROQ_API_KEY=${GROQ_API_KEY}
+      - GROQ_MODEL=llama-3.1-8b-instant
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
@@ -202,7 +192,6 @@ services:
     networks:
       - dev-rpg-network
 
-  # Event Loop MCP - Async Analysis (Port 3204)
   event_loop_mcp:
     build:
       context: ./mcp-agents/event_loop_mcp
@@ -213,11 +202,9 @@ services:
     environment:
       - SERVICE_NAME=event_loop_mcp
       - PORT=8000
-      - OLLAMA_URL=http://ollama:11434
-      - OLLAMA_MODEL=llama3
-    depends_on:
-      ollama:
-        condition: service_healthy
+      - LLM_PROVIDER=groq
+      - GROQ_API_KEY=${GROQ_API_KEY}
+      - GROQ_MODEL=llama-3.1-8b-instant
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
@@ -228,7 +215,6 @@ services:
     networks:
       - dev-rpg-network
 
-  # Cost MCP - Complexity & Cost Analysis (Port 3205)
   cost_mcp:
     build:
       context: ./mcp-agents/cost_mcp
@@ -239,11 +225,9 @@ services:
     environment:
       - SERVICE_NAME=cost_mcp
       - PORT=8000
-      - OLLAMA_URL=http://ollama:11434
-      - OLLAMA_MODEL=llama3
-    depends_on:
-      ollama:
-        condition: service_healthy
+      - LLM_PROVIDER=groq
+      - GROQ_API_KEY=${GROQ_API_KEY}
+      - GROQ_MODEL=llama-3.1-8b-instant
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
@@ -258,8 +242,8 @@ services:
 # VOLUMES
 # ===========================================
 volumes:
-  ollama_models:
-    name: dev-rpg-ollama-models
+  # ollama_models:
+  #   name: dev-rpg-ollama-models
   postgres_data:
     name: dev-rpg-postgres-data
   n8n_data:

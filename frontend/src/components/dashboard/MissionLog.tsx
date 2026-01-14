@@ -1,6 +1,9 @@
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Icon } from '../Icon'
 import { Badge } from '../Badge'
+import { useReports } from '../../hooks/useApi'
+import { AnalysisReport } from '../../services/api'
 
 interface Mission {
   id: string
@@ -13,64 +16,6 @@ interface Mission {
   timestamp: string
   agents: string[]
 }
-
-const missions: Mission[] = [
-  {
-    id: '1',
-    title: 'Fix memory leak in DataProcessor.js',
-    type: 'bug',
-    status: 'in-progress',
-    priority: 'critical',
-    xpReward: 500,
-    goldReward: 150,
-    timestamp: '2 min ago',
-    agents: ['CODE_QUALITY_MCP', 'ARCHITECT_MCP'],
-  },
-  {
-    id: '2',
-    title: 'Implement OAuth2 authentication',
-    type: 'feature',
-    status: 'completed',
-    priority: 'high',
-    xpReward: 750,
-    goldReward: 200,
-    timestamp: '15 min ago',
-    agents: ['ARCHITECT_MCP'],
-  },
-  {
-    id: '3',
-    title: 'Refactor legacy API endpoints',
-    type: 'refactor',
-    status: 'pending',
-    priority: 'medium',
-    xpReward: 300,
-    goldReward: 80,
-    timestamp: '1 hour ago',
-    agents: ['CODE_QUALITY_MCP'],
-  },
-  {
-    id: '4',
-    title: 'SQL injection vulnerability scan',
-    type: 'security',
-    status: 'failed',
-    priority: 'critical',
-    xpReward: 1000,
-    goldReward: 500,
-    timestamp: '3 hours ago',
-    agents: ['LIGHTHOUSE_MCP'],
-  },
-  {
-    id: '5',
-    title: 'Add unit tests for UserService',
-    type: 'feature',
-    status: 'completed',
-    priority: 'low',
-    xpReward: 200,
-    goldReward: 50,
-    timestamp: '5 hours ago',
-    agents: ['CODE_QUALITY_MCP'],
-  },
-]
 
 const typeConfig = {
   bug: { icon: 'bug_report', color: 'destructive' as const },
@@ -93,7 +38,79 @@ const priorityConfig = {
   low: { color: 'default' as const },
 }
 
+// Convert AnalysisReport to Mission for display
+function reportToMission(report: AnalysisReport): Mission {
+  // Determine type based on analysis content
+  const hasSecurityIssue = report.code_quality?.issues?.some(i => i.type.includes('security'))
+  const hasArchIssue = report.architecture && (report.architecture.circular_dependencies?.length > 0 || report.architecture.layer_violations?.length > 0)
+  const hasBug = report.code_quality?.issues?.some(i => i.severity === 'critical' || i.severity === 'high')
+  
+  let type: Mission['type'] = 'feature'
+  if (hasSecurityIssue) type = 'security'
+  else if (hasBug) type = 'bug'
+  else if (hasArchIssue) type = 'refactor'
+  
+  // Determine status based on score
+  let status: Mission['status'] = 'completed'
+  if (report.status === 'critical') status = 'failed'
+  else if (report.status === 'needs_improvement') status = 'in-progress'
+  
+  // Determine priority based on score
+  let priority: Mission['priority'] = 'low'
+  if (report.overall_score < 50) priority = 'critical'
+  else if (report.overall_score < 70) priority = 'high'
+  else if (report.overall_score < 85) priority = 'medium'
+  
+  // Get active agents from analysis
+  const agents: string[] = []
+  if (report.code_quality) agents.push('CODE_QUALITY_MCP')
+  if (report.architecture) agents.push('ARCHITECT_MCP')
+  if (report.event_loop) agents.push('EVENT_LOOP_MCP')
+  if (report.cost_analysis) agents.push('COST_MCP')
+  
+  // Calculate time ago
+  const analyzed = new Date(report.analyzed_at)
+  const now = new Date()
+  const diff = now.getTime() - analyzed.getTime()
+  const minutes = Math.floor(diff / 60000)
+  const hours = Math.floor(minutes / 60)
+  const days = Math.floor(hours / 24)
+  
+  let timestamp = 'Just now'
+  if (days > 0) timestamp = `${days}d ago`
+  else if (hours > 0) timestamp = `${hours}h ago`
+  else if (minutes > 0) timestamp = `${minutes}m ago`
+  
+  return {
+    id: report.report_id,
+    title: `Analysis #${report.report_id.slice(-6)} - Score: ${report.overall_score}`,
+    type,
+    status,
+    priority,
+    xpReward: report.rpg_summary?.xp_earned || report.overall_score * 10,
+    goldReward: Math.floor((report.rpg_summary?.xp_earned || report.overall_score * 10) / 3),
+    timestamp,
+    agents,
+  }
+}
+
 export function MissionLog() {
+  const [filter, setFilter] = useState<'all' | 'active' | 'completed'>('all')
+  const { data: reports, loading, error } = useReports(undefined, 20, 0)
+  
+  // Convert reports to missions
+  const missions = reports?.map(reportToMission) || []
+  
+  // Filter missions
+  const filteredMissions = missions.filter(m => {
+    if (filter === 'all') return true
+    if (filter === 'active') return m.status === 'in-progress' || m.status === 'pending'
+    if (filter === 'completed') return m.status === 'completed' || m.status === 'failed'
+    return true
+  })
+  
+  const activeCount = missions.filter(m => m.status === 'in-progress' || m.status === 'pending').length
+  
   return (
     <section className="flex-1 overflow-hidden flex flex-col">
       {/* Header */}
@@ -103,16 +120,37 @@ export function MissionLog() {
           <h3 className="font-display font-bold text-sm uppercase tracking-widest text-white">
             Mission Log
           </h3>
-          <Badge variant="primary">{missions.length} ACTIVE</Badge>
+          <Badge variant="primary">{activeCount > 0 ? `${activeCount} ACTIVE` : `${missions.length} TOTAL`}</Badge>
         </div>
         <div className="flex gap-2">
-          <button className="px-3 py-1.5 text-xs font-mono uppercase text-gray-400 hover:text-white bg-surface-highlight rounded border border-transparent hover:border-surface-accent transition-all">
+          <button 
+            onClick={() => setFilter('all')}
+            className={`px-3 py-1.5 text-xs font-mono uppercase rounded border transition-all ${
+              filter === 'all' 
+                ? 'text-primary bg-primary/10 border-primary/30' 
+                : 'text-gray-400 hover:text-white bg-surface-highlight border-transparent hover:border-surface-accent'
+            }`}
+          >
             All
           </button>
-          <button className="px-3 py-1.5 text-xs font-mono uppercase text-primary bg-primary/10 rounded border border-primary/30">
+          <button 
+            onClick={() => setFilter('active')}
+            className={`px-3 py-1.5 text-xs font-mono uppercase rounded border transition-all ${
+              filter === 'active' 
+                ? 'text-primary bg-primary/10 border-primary/30' 
+                : 'text-gray-400 hover:text-white bg-surface-highlight border-transparent hover:border-surface-accent'
+            }`}
+          >
             Active
           </button>
-          <button className="px-3 py-1.5 text-xs font-mono uppercase text-gray-400 hover:text-white bg-surface-highlight rounded border border-transparent hover:border-surface-accent transition-all">
+          <button 
+            onClick={() => setFilter('completed')}
+            className={`px-3 py-1.5 text-xs font-mono uppercase rounded border transition-all ${
+              filter === 'completed' 
+                ? 'text-primary bg-primary/10 border-primary/30' 
+                : 'text-gray-400 hover:text-white bg-surface-highlight border-transparent hover:border-surface-accent'
+            }`}
+          >
             Completed
           </button>
         </div>
@@ -120,7 +158,34 @@ export function MissionLog() {
       
       {/* Mission List */}
       <div className="flex-1 overflow-y-auto p-6 space-y-3 custom-scrollbar">
-        {missions.map((mission) => {
+        {loading && (
+          <div className="text-center py-12">
+            <Icon name="sync" className="text-3xl text-primary animate-spin" />
+            <p className="text-sm text-gray-400 mt-3 font-mono">Loading missions...</p>
+          </div>
+        )}
+        
+        {error && !loading && (
+          <div className="text-center py-12">
+            <Icon name="error" className="text-3xl text-destructive" />
+            <p className="text-sm text-gray-400 mt-3 font-mono">Failed to load missions</p>
+            <p className="text-xs text-gray-500 mt-1">{error.message}</p>
+          </div>
+        )}
+        
+        {!loading && !error && filteredMissions.length === 0 && (
+          <div className="text-center py-12">
+            <Icon name="assignment_turned_in" className="text-5xl text-gray-600" />
+            <p className="text-sm text-gray-400 mt-3">No missions found</p>
+            <p className="text-xs text-gray-500 mt-1 font-mono">
+              {filter === 'all' 
+                ? 'Run a code analysis to create your first mission!' 
+                : `No ${filter} missions at the moment`}
+            </p>
+          </div>
+        )}
+        
+        {filteredMissions.map((mission) => {
           const type = typeConfig[mission.type]
           const status = statusConfig[mission.status]
           const priority = priorityConfig[mission.priority]

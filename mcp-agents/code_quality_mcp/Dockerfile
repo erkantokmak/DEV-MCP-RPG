@@ -13,6 +13,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # Create shared directory and copy utilities
 RUN mkdir -p /app/shared
+COPY llm_client.py /app/shared/llm_client.py
 COPY ollama_utils.py /app/shared/ollama_utils.py
 
 # Copy application code

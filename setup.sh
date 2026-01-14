@@ -1,7 +1,7 @@
 #!/bin/bash
 # ===========================================
-# Dev-RPG Setup Script v2.0
-# AI-Powered CI/CD Tool with Ollama Integration
+# Dev-RPG Setup Script v3.0
+# AI-Powered CI/CD Tool with Groq API Integration
 # ===========================================
 
 set -e
@@ -16,11 +16,10 @@ NC='\033[0m'
 
 # Configuration
 PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-OLLAMA_MODEL="${OLLAMA_MODEL:-llama3}"
 
 echo "╔═══════════════════════════════════════════════════════════════╗"
-echo "║           Dev-RPG - AI-Powered CI/CD Tool Setup v2.0          ║"
-echo "║                   Local Ollama Integration                    ║"
+echo "║           Dev-RPG - AI-Powered CI/CD Tool Setup v3.0          ║"
+echo "║                   Groq API Integration                        ║"
 echo "╚═══════════════════════════════════════════════════════════════╝"
 echo ""
 echo -e "${CYAN}Project Directory: ${PROJECT_DIR}${NC}"
@@ -71,7 +70,7 @@ wait_for_service() {
 # ===========================================
 # Step 1: Check Prerequisites
 # ===========================================
-log_step "1/8" "Checking prerequisites..."
+log_step "1/6" "Checking prerequisites..."
 
 # Check Docker
 if ! command -v docker &> /dev/null; then
@@ -99,32 +98,64 @@ if ! docker ps > /dev/null 2>&1; then
     exit 1
 fi
 
-# Check available disk space (need at least 10GB)
+# Check available disk space (need at least 5GB)
 AVAILABLE_SPACE=$(df -BG "$PROJECT_DIR" | awk 'NR==2 {print $4}' | sed 's/G//')
-if [ "$AVAILABLE_SPACE" -lt 10 ]; then
-    log_warning "Low disk space: ${AVAILABLE_SPACE}GB available (recommended: 10GB+)"
+if [ "$AVAILABLE_SPACE" -lt 5 ]; then
+    log_warning "Low disk space: ${AVAILABLE_SPACE}GB available (recommended: 5GB+)"
 fi
 
 # ===========================================
-# Step 2: Create Environment File
+# Step 2: Configure Groq API Key
 # ===========================================
-log_step "2/8" "Creating environment configuration..."
+log_step "2/6" "Configuring Groq API..."
 
-if [ ! -f "$PROJECT_DIR/.env" ]; then
-    # Generate random password
-    RANDOM_PASS=$(openssl rand -hex 8 2>/dev/null || head /dev/urandom | tr -dc A-Za-z0-9 | head -c 16)
-    
-    cat > "$PROJECT_DIR/.env" << EOF
+# Check for API key file
+if [ -f "$PROJECT_DIR/apikey" ]; then
+    GROQ_API_KEY=$(cat "$PROJECT_DIR/apikey" | tr -d '\n\r ')
+    log_success "Found Groq API key in apikey file"
+elif [ -n "$GROQ_API_KEY" ]; then
+    log_success "Using GROQ_API_KEY from environment"
+else
+    log_error "Groq API key not found!"
+    echo ""
+    echo "Please provide your Groq API key. You can get one free at:"
+    echo -e "${CYAN}https://console.groq.com/keys${NC}"
+    echo ""
+    echo "Option 1: Create an 'apikey' file in project root:"
+    echo "  echo 'your-api-key-here' > $PROJECT_DIR/apikey"
+    echo ""
+    echo "Option 2: Set environment variable:"
+    echo "  export GROQ_API_KEY='your-api-key-here'"
+    echo ""
+    exit 1
+fi
+
+# Validate API key format
+if [[ ! "$GROQ_API_KEY" =~ ^gsk_ ]]; then
+    log_warning "API key doesn't start with 'gsk_' - this may not be a valid Groq API key"
+fi
+
+# ===========================================
+# Step 3: Create Environment File
+# ===========================================
+log_step "3/6" "Creating environment configuration..."
+
+# Generate random password for PostgreSQL
+RANDOM_PASS=$(openssl rand -hex 8 2>/dev/null || head /dev/urandom | tr -dc A-Za-z0-9 | head -c 16)
+
+cat > "$PROJECT_DIR/.env" << EOF
 # Dev-RPG Environment Configuration
 # Generated on: $(date)
+
+# Groq API (Cloud LLM - Free Tier)
+GROQ_API_KEY=${GROQ_API_KEY}
+LLM_PROVIDER=groq
+GROQ_MODEL=llama-3.1-8b-instant
 
 # Database
 POSTGRES_USER=dev_rpg_user
 POSTGRES_PASSWORD=dev_rpg_secret_${RANDOM_PASS}
 POSTGRES_DB=dev_rpg
-
-# Ollama
-OLLAMA_MODEL=${OLLAMA_MODEL}
 
 # n8n
 N8N_BASIC_AUTH_ACTIVE=false
@@ -136,53 +167,49 @@ TZ=Europe/Istanbul
 # Server IP (change this to your server's IP)
 SERVER_IP=$(hostname -I 2>/dev/null | awk '{print $1}' || echo "localhost")
 EOF
-    log_success "Created .env file with secure random password"
-else
-    log_warning ".env file already exists, skipping..."
-fi
 
-# Load environment
-source "$PROJECT_DIR/.env" 2>/dev/null || true
+log_success "Created .env file with Groq API configuration"
 
 # ===========================================
-# Step 3: Create Required Directories
+# Step 4: Build Docker Images (Sequential)
 # ===========================================
-log_step "3/8" "Creating directory structure..."
-
-directories=(
-    "logs"
-)
-
-for dir in "${directories[@]}"; do
-    mkdir -p "$PROJECT_DIR/$dir"
-done
-log_success "Directory structure created"
-
-# ===========================================
-# Step 4: Build Docker Images
-# ===========================================
-log_step "4/8" "Building Docker images..."
+log_step "4/6" "Building Docker images..."
 
 cd "$PROJECT_DIR"
 
-# Build all images
-echo "Building Docker images (this may take several minutes)..."
-$COMPOSE_CMD build --parallel 2>/dev/null || $COMPOSE_CMD build
+# Load environment
+set -a
+source "$PROJECT_DIR/.env"
+set +a
 
-log_success "Docker images built successfully"
+# Build frontend first (to ensure it's ready before starting)
+echo "Building frontend image..."
+$COMPOSE_CMD build frontend
+log_success "Frontend image built"
+
+# Build backend
+echo "Building backend image..."
+$COMPOSE_CMD build backend
+log_success "Backend image built"
+
+# Build MCP agents
+echo "Building MCP agent images..."
+$COMPOSE_CMD build lighthouse_mcp code_quality_mcp architect_mcp event_loop_mcp cost_mcp
+log_success "All MCP agents built"
+
+log_success "All Docker images built successfully"
 
 # ===========================================
-# Step 5: Start Core Infrastructure
+# Step 5: Start Services (Sequential)
 # ===========================================
-log_step "5/8" "Starting core infrastructure..."
+log_step "5/6" "Starting services..."
 
-# Start core services first (database and ollama)
-echo "Starting PostgreSQL and Ollama..."
-$COMPOSE_CMD up -d postgres ollama
-
-# Wait for PostgreSQL
-echo "Waiting for PostgreSQL to be ready..."
+# Start PostgreSQL first
+echo "Starting PostgreSQL..."
+$COMPOSE_CMD up -d postgres
 sleep 5
+
+# Wait for PostgreSQL to be ready
 MAX_RETRIES=30
 RETRY=0
 until docker exec dev-rpg-postgres pg_isready -U dev_rpg_user -d dev_rpg > /dev/null 2>&1; do
@@ -197,39 +224,38 @@ done
 echo ""
 log_success "PostgreSQL is ready"
 
-# ===========================================
-# Step 6: Pull Ollama Model
-# ===========================================
-log_step "6/8" "Setting up Ollama LLM..."
+# Start backend
+echo "Starting Backend API..."
+$COMPOSE_CMD up -d backend
+sleep 3
 
-# Wait for Ollama to be ready
-wait_for_service "http://localhost:3260/api/tags" "Ollama API" 60
+# Start MCP agents
+echo "Starting MCP agents..."
+$COMPOSE_CMD up -d lighthouse_mcp code_quality_mcp architect_mcp event_loop_mcp cost_mcp
+sleep 5
 
-# Check if model is already pulled
-MODELS=$(docker exec dev-rpg-ollama ollama list 2>/dev/null || echo "")
-if echo "$MODELS" | grep -q "$OLLAMA_MODEL"; then
-    log_success "Model '$OLLAMA_MODEL' is already available"
-else
-    echo "Pulling $OLLAMA_MODEL model (this may take 5-15 minutes)..."
-    echo "Model size: ~4GB for llama3"
-    docker exec dev-rpg-ollama ollama pull "$OLLAMA_MODEL"
-    log_success "Model '$OLLAMA_MODEL' pulled successfully"
-fi
+# Start n8n
+echo "Starting n8n workflow engine..."
+$COMPOSE_CMD up -d n8n
+sleep 3
+
+# Start frontend
+echo "Starting Frontend..."
+$COMPOSE_CMD up -d frontend
+sleep 3
+
+log_success "All services started"
 
 # ===========================================
-# Step 7: Start All Services
+# Step 6: Verify Services
 # ===========================================
-log_step "7/8" "Starting all services..."
-
-$COMPOSE_CMD up -d
+log_step "6/6" "Verifying services..."
 
 echo "Waiting for services to initialize..."
-sleep 15
+sleep 10
 
-# ===========================================
-# Step 8: Verify All Services
-# ===========================================
-log_step "8/8" "Verifying services..."
+# Load SERVER_IP from .env
+source "$PROJECT_DIR/.env" 2>/dev/null || true
 
 echo ""
 echo "┌─────────────────────────────────────────────────────────────┐"
@@ -266,8 +292,7 @@ check_service "Event Loop MCP" "3204" "/health"
 check_service "Cost MCP" "3205" "/health"
 check_service "Backend API" "3210" "/health"
 check_service "n8n Workflow" "3220" ""
-check_service "PostgreSQL" "3230" ""
-check_service "Ollama LLM" "3260" "/api/tags"
+check_service "PostgreSQL" "3231" ""
 
 echo "└───────────────────────┴───────────┴─────────────────────────┘"
 
@@ -284,7 +309,11 @@ echo "   • Dashboard:      http://${SERVER_IP:-localhost}:3200"
 echo "   • API Docs:       http://${SERVER_IP:-localhost}:3210/docs"
 echo "   • n8n Workflows:  http://${SERVER_IP:-localhost}:3220"
 echo ""
-echo -e "${YELLOW}📋 REMAINING MANUAL STEPS:${NC}"
+echo -e "${CYAN}🤖 LLM Provider: Groq API (Cloud)${NC}"
+echo "   • Model: llama-3.1-8b-instant"
+echo "   • Free tier: ~500 requests/day"
+echo ""
+echo -e "${YELLOW}📋 NEXT STEPS:${NC}"
 echo ""
 echo "   1️⃣  Import n8n Workflow:"
 echo "       • Open http://${SERVER_IP:-localhost}:3220"
@@ -293,14 +322,10 @@ echo "       • Go to Workflows → Import from File"
 echo "       • Select: n8n-workflows/code-analysis-pipeline.json"
 echo "       • Activate the workflow (toggle switch)"
 echo ""
-echo "   2️⃣  Connect Jenkins (if using Docker Jenkins):"
-echo "       ./scripts/connect-jenkins.sh <your-jenkins-container-name>"
-echo ""
-echo "   3️⃣  Test the System:"
+echo "   2️⃣  Test the System:"
 echo "       curl -X POST http://localhost:3210/api/analyze \\"
 echo "         -H 'Content-Type: application/json' \\"
 echo "         -d '{\"code\": \"def hello(): print(42)\", \"language\": \"python\"}'"
 echo ""
 echo -e "${CYAN}📖 Full documentation: SETUP.md${NC}"
-echo -e "${CYAN}🚀 Quick reference: QUICKSTART.md${NC}"
 echo ""

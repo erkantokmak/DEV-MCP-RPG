@@ -10,6 +10,7 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 RUN mkdir -p /app/shared
+COPY llm_client.py /app/shared/llm_client.py
 COPY ollama_utils.py /app/shared/ollama_utils.py
 COPY main.py .
 
