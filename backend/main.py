@@ -909,6 +909,7 @@ async def jenkins_webhook(payload: JenkinsWebhookPayload):
     
     try:
         # Forward to n8n
+        logger.info(f"Triggering n8n webhook at: {N8N_WEBHOOK_URL}/webhook/analyze-code")
         async with httpx.AsyncClient(timeout=30.0) as client:
             response = await client.post(
                 f"{N8N_WEBHOOK_URL}/webhook/analyze-code",

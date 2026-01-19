@@ -211,7 +211,7 @@ N8N_SECURE_COOKIE=false
 TZ=Europe/Istanbul
 
 # Server IP (change this to your server's IP)
-SERVER_IP=$(hostname -I 2>/dev/null | awk '{print $1}' || echo "localhost")
+SERVER_IP=$(curl -s ifconfig.me || hostname -I | awk '{print $1}' || echo "localhost")
 API_URL=http://${SERVER_IP}:3210
 EOF
 

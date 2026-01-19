@@ -80,7 +80,7 @@ fi
 echo ""
 echo -e "${BLUE}Tip: After import, test the webhook with:${NC}"
 echo ""
-echo "  curl -X POST $N8N_URL/webhook/code-analysis \\"
+echo "  curl -X POST $N8N_URL/webhook/analyze-code \\"
 echo "    -H 'Content-Type: application/json' \\"
 echo "    -d '{\"code\": \"print(42)\", \"language\": \"python\"}'"
 echo ""
