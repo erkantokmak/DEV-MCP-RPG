@@ -24,7 +24,7 @@ pipeline {
         
         // Proje bilgileri
         PROJECT_ID = credentials('dev-rpg-project-id') ?: ''
-        USER_ID = credentials('dev-rpg-user-id') ?: ''
+        // USER_ID = credentials('dev-rpg-user-id') ?: ''
     }
     
     options {
@@ -95,7 +95,6 @@ pipeline {
                 script {
                     def changedFilesList = env.CHANGED_FILES.split('\n').findAll { it }
                     
-                    // Analiz edilecek dosyaları filtrele (sadece kod dosyaları)
                     def codeExtensions = ['js', 'ts', 'tsx', 'jsx', 'py', 'java', 'go', 'rs', 'cpp', 'c', 'cs']
                     def codeFiles = changedFilesList.findAll { file ->
                         def ext = file.tokenize('.').last()
@@ -107,9 +106,8 @@ pipeline {
                         return
                     }
                     
-                    echo "Analyzing ${codeFiles.size()} code files..."
+                    echo "Analyzing ${codeFiles.size()} code files via Backend API..."
                     
-                    // Dosya içeriklerini oku ve n8n'e gönder
                     def filesData = []
                     codeFiles.each { file ->
                         try {
@@ -127,8 +125,7 @@ pipeline {
                         }
                     }
                     
-                    // n8n webhook'a gönder
-                    def payload = [
+                     def payload = [
                         commit_id: env.GIT_COMMIT_SHORT,
                         branch: env.GIT_BRANCH_NAME,
                         repository: env.GIT_URL ?: 'unknown',
@@ -136,23 +133,34 @@ pipeline {
                         message: env.GIT_COMMIT_MSG,
                         files: filesData,
                         timestamp: new Date().format("yyyy-MM-dd'T'HH:mm:ss'Z'"),
-                        project_id: env.PROJECT_ID,
-                        user_id: env.USER_ID
+                        project_id: env.PROJECT_ID
                     ]
                     
                     try {
                         def response = httpRequest(
-                            url: "${DEV_RPG_N8N_URL}/webhook/analyze-code",
+                            url: "${DEV_RPG_API_URL}/api/webhook/jenkins",
                             httpMode: 'POST',
                             contentType: 'APPLICATION_JSON',
                             requestBody: groovy.json.JsonOutput.toJson(payload),
-                            timeout: 300,  // 5 dakika (LLM analizi zaman alabilir)
+                            timeout: 300,
                             validResponseCodes: '200:299'
                         )
                         
-                        def result = readJSON text: response.content
+                        def jsonResponse = readJSON text: response.content
                         
-                        // Sonuçları kaydet
+                        
+                        def result = jsonResponse.n8n_response
+                        
+                    
+                        if (result instanceof List) {
+                            if (result.size() > 0) {
+                                result = result[0]
+                            } else {
+                                result = [:] 
+                        }
+                        
+                        echo "Analysis linked to User ID: ${jsonResponse.user_linked}"
+
                         env.ANALYSIS_REPORT_ID = result.report_id ?: 'unknown'
                         env.OVERALL_SCORE = result.overall_score?.toString() ?: '0'
                         env.ANALYSIS_STATUS = result.status ?: 'unknown'
@@ -162,6 +170,7 @@ pipeline {
                         ║                    DEV-RPG ANALYSIS REPORT                    ║
                         ╠══════════════════════════════════════════════════════════════╣
                         ║  Report ID: ${env.ANALYSIS_REPORT_ID}
+                        ║  User: ${env.GIT_AUTHOR} (Auto-Registered)
                         ║  Overall Score: ${env.OVERALL_SCORE}/100
                         ║  Status: ${env.ANALYSIS_STATUS}
                         ║  
@@ -175,7 +184,6 @@ pipeline {
                         ╚══════════════════════════════════════════════════════════════╝
                         """
                         
-                        // Skor eşiğini kontrol et
                         def threshold = env.QUALITY_THRESHOLD?.toInteger() ?: 50
                         if (env.OVERALL_SCORE.toInteger() < threshold) {
                             unstable("Code quality score (${env.OVERALL_SCORE}) is below threshold (${threshold})")
@@ -183,7 +191,6 @@ pipeline {
                         
                     } catch (Exception e) {
                         echo "Dev-RPG analysis failed: ${e.message}"
-                        // Build'i başarısız yapma, sadece uyar
                         unstable("Could not complete Dev-RPG analysis")
                     }
                 }

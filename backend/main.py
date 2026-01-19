@@ -14,6 +14,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 import httpx
 import asyncpg
+import uuid
+import secrets
 
 # Configure logging
 logging.basicConfig(
@@ -494,162 +496,56 @@ async def get_project(project_id: str):
 @app.post("/api/analyze", response_model=AnalysisReport)
 async def analyze_code(request: AnalysisRequest):
     """
-    Run full code analysis through all MCPs
+    Code analizini n8n üzerinden başlatır ve sonucu döner.
     """
-    logger.info(f"Starting analysis for {request.file_path or 'unnamed file'}")
-    
+    logger.info(f"Starting n8n analysis for {request.file_path or 'unnamed file'}")
+
     analysis_data = {
         "code": request.code,
         "language": request.language,
         "file_path": request.file_path,
-        "commit_id": request.commit_id
+        "commit_id": request.commit_id,
+        "project_id": request.project_id,
+        "user_id": request.user_id
     }
     
-    results = {}
+    n8n_url = f"{N8N_WEBHOOK_URL}/webhook/analyze-code"
     
-    # Call MCPs in parallel using httpx
-    async with httpx.AsyncClient(timeout=120.0) as client:
-        # Code Quality
-        try:
-            resp = await client.post(f"{MCP_SERVICES['code_quality']}/analyze", json=analysis_data)
-            results['code_quality'] = resp.json() if resp.status_code == 200 else None
-        except Exception as e:
-            logger.error(f"Code quality analysis failed: {e}")
-            results['code_quality'] = None
-        
-        # Architecture
-        try:
-            resp = await client.post(f"{MCP_SERVICES['architect']}/analyze", json=analysis_data)
-            results['architecture'] = resp.json() if resp.status_code == 200 else None
-        except Exception as e:
-            logger.error(f"Architecture analysis failed: {e}")
-            results['architecture'] = None
-        
-        # Event Loop
-        try:
-            resp = await client.post(f"{MCP_SERVICES['event_loop']}/analyze", json=analysis_data)
-            results['event_loop'] = resp.json() if resp.status_code == 200 else None
-        except Exception as e:
-            logger.error(f"Event loop analysis failed: {e}")
-            results['event_loop'] = None
-        
-        # Cost
-        try:
-            resp = await client.post(f"{MCP_SERVICES['cost']}/analyze", json=analysis_data)
-            results['cost'] = resp.json() if resp.status_code == 200 else None
-        except Exception as e:
-            logger.error(f"Cost analysis failed: {e}")
-            results['cost'] = None
-    
-    # Calculate overall score
-    scores = []
-    weights = {
-        'code_quality': 0.3,
-        'architecture': 0.25,
-        'event_loop': 0.2,
-        'cost': 0.25
-    }
-    
-    if results['code_quality'] and 'score' in results['code_quality']:
-        scores.append(('code_quality', results['code_quality']['score'], weights['code_quality']))
-    if results['architecture'] and 'architecture_score' in results['architecture']:
-        scores.append(('architecture', results['architecture']['architecture_score'], weights['architecture']))
-    if results['event_loop'] and 'event_loop_score' in results['event_loop']:
-        scores.append(('event_loop', results['event_loop']['event_loop_score'], weights['event_loop']))
-    if results['cost'] and 'efficiency_score' in results['cost']:
-        scores.append(('cost', results['cost']['efficiency_score'], weights['cost']))
-    
-    if scores:
-        total_weight = sum(s[2] for s in scores)
-        overall_score = int(sum(s[1] * s[2] for s in scores) / total_weight)
-    else:
-        overall_score = 0
-    
-    # Determine status
-    if overall_score >= 85:
-        status = "excellent"
-    elif overall_score >= 70:
-        status = "good"
-    elif overall_score >= 50:
-        status = "needs_improvement"
-    else:
-        status = "critical"
-    
-    # Calculate XP
-    xp_earned = overall_score * 10
-    
-    # Determine badges
-    badges = []
-    if results['code_quality'] and results['code_quality'].get('score', 0) >= 90:
-        badges.append("Clean Coder")
-    if results['architecture'] and results['architecture'].get('architecture_score', 0) >= 90:
-        badges.append("Architect Master")
-    if results['event_loop'] and results['event_loop'].get('event_loop_score', 0) >= 90:
-        badges.append("Async Ninja")
-    if results['cost'] and results['cost'].get('efficiency_score', 0) >= 90:
-        badges.append("Optimizer")
-    if overall_score >= 95:
-        badges.append("Code Legend")
-    
-    report_id = f"RPT-{datetime.utcnow().strftime('%Y%m%d%H%M%S')}"
-    
-    # Save to database
-    if db_pool and request.project_id:
-        try:
-            async with db_pool.acquire() as conn:
-                await conn.execute(
-                    """
-                    INSERT INTO analysis_reports (
-                        report_id, project_id, commit_id, file_path,
-                        overall_score, status,
-                        code_quality_score, architecture_score, event_loop_score, efficiency_score,
-                        code_quality_report, architecture_report, event_loop_report, cost_report,
-                        xp_earned, badges_earned
-                    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
-                    """,
-                    report_id, request.project_id, request.commit_id, request.file_path,
-                    overall_score, status,
-                    results['code_quality'].get('score') if results['code_quality'] else None,
-                    results['architecture'].get('architecture_score') if results['architecture'] else None,
-                    results['event_loop'].get('event_loop_score') if results['event_loop'] else None,
-                    results['cost'].get('efficiency_score') if results['cost'] else None,
-                    json.dumps(results['code_quality']) if results['code_quality'] else None,
-                    json.dumps(results['architecture']) if results['architecture'] else None,
-                    json.dumps(results['event_loop']) if results['event_loop'] else None,
-                    json.dumps(results['cost']) if results['cost'] else None,
-                    xp_earned, badges
-                )
-                
-                # Update user XP if user_id provided
-                if request.user_id:
-                    await conn.execute(
-                        """
-                        UPDATE users 
-                        SET xp_total = xp_total + $1,
-                            level = $2
-                        WHERE id = $3
-                        """,
-                        xp_earned, calculate_level(xp_earned), request.user_id
-                    )
-        except Exception as e:
-            logger.error(f"Failed to save report to database: {e}")
-    
-    return AnalysisReport(
-        report_id=report_id,
-        overall_score=overall_score,
-        status=status,
-        code_quality=results['code_quality'],
-        architecture=results['architecture'],
-        event_loop=results['event_loop'],
-        cost_analysis=results['cost'],
-        rpg_summary={
-            "xp_earned": xp_earned,
-            "badges_earned": badges,
-            "level_up": overall_score >= 90
-        },
-        analyzed_at=datetime.utcnow().isoformat()
-    )
+    try:
+        async with httpx.AsyncClient(timeout=120.0) as client:
+            # n8n'e istek at
+            response = await client.post(n8n_url, json=analysis_data)
+            
+            if response.status_code != 200:
+                logger.error(f"n8n returned error: {response.text}")
+                raise HTTPException(status_code=500, detail="n8n analysis workflow failed")
+            
+            result_json = response.json()
+            
+            if isinstance(result_json, list) and len(result_json) > 0:
+                report_data = result_json[0]
+            else:
+                report_data = result_json
 
+            return AnalysisReport(
+                report_id=report_data.get('report_id'),
+                overall_score=report_data.get('overall_score', 0),
+                status=report_data.get('status', 'unknown'),
+                code_quality=report_data.get('code_quality'),
+                architecture=report_data.get('architecture'),
+                event_loop=report_data.get('event_loop'),
+                cost_analysis=report_data.get('cost_analysis'),
+                rpg_summary=report_data.get('rpg_summary'),
+                analyzed_at=report_data.get('generated_at', datetime.utcnow().isoformat())
+            )
+
+    except httpx.TimeoutException:
+        logger.error("n8n workflow timed out")
+        raise HTTPException(status_code=504, detail="Analysis timed out (n8n)")
+    except Exception as e:
+        logger.error(f"Failed to trigger n8n: {e}")
+        # Hata durumunda fallback veya hata fırlatma
+        raise HTTPException(status_code=500, detail=f"Analysis failed: {str(e)}")
 
 @app.post("/api/analyze/lighthouse")
 async def analyze_lighthouse(request: LighthouseRequest):
@@ -900,26 +796,81 @@ async def get_dashboard_stats(user_id: str):
 # ===========================================
 # Jenkins Webhook Endpoint
 # ===========================================
+async def get_or_create_user_from_jenkins(author_name: str) -> str:
+    """
+    Jenkins'ten gelen author ismine göre kullanıcıyı bulur veya oluşturur.
+    Geriye user_id döner.
+    """
+    if not db_pool:
+        logger.error("Database pool not available for auto-registration")
+        return None
+
+    # Git author ismini güvenli username formatına çevir (boşlukları sil vs.)
+    username = author_name.lower().replace(" ", "_").replace("-", "_")
+    # Email gelmediği için dummy bir email oluşturuyoruz
+    dummy_email = f"{username}@dev-rpg.local"
+    
+    async with db_pool.acquire() as conn:
+        # 1. Kullanıcı var mı kontrol et
+        row = await conn.fetchrow(
+            "SELECT id FROM users WHERE username = $1", 
+            username
+        )
+        
+        if row:
+            logger.info(f"User found for author: {author_name} (ID: {row['id']})")
+            return str(row['id'])
+        
+        # 2. Yoksa Otomatik Oluştur
+        logger.info(f"Auto-registering new user from Jenkins: {username}")
+        
+        # Rastgele bir şifre ata (Kullanıcı daha sonra admin panelinden veya şifremi unuttum ile alabilir)
+        # Veya varsayılan bir şifre belirle: 'devrpg123'
+        random_password = secrets.token_urlsafe(10) 
+        
+        try:
+            new_row = await conn.fetchrow(
+                """
+                INSERT INTO users (username, email, password_hash, display_name)
+                VALUES ($1, $2, $3, $4)
+                RETURNING id
+                """,
+                username, dummy_email, random_password, author_name
+            )
+            return str(new_row['id'])
+        except Exception as e:
+            logger.error(f"Failed to auto-register user {username}: {e}")
+            return None
+
 @app.post("/api/webhook/jenkins")
 async def jenkins_webhook(payload: JenkinsWebhookPayload):
     """
-    Receive webhook from Jenkins and trigger n8n workflow
+    Receive webhook from Jenkins, AUTO-REGISTER user, and trigger n8n workflow
     """
-    logger.info(f"Received Jenkins webhook for commit: {payload.commit_id}")
+    logger.info(f"Received Jenkins webhook for commit: {payload.commit_id} by {payload.author}")
     
     try:
-        # Forward to n8n
+        user_id = await get_or_create_user_from_jenkins(payload.author)
+        
+
+        workflow_data = payload.dict()
+        if user_id:
+            workflow_data['user_id'] = user_id
+            logger.info(f"Linked analysis to User ID: {user_id}")
+
+
+
         logger.info(f"Triggering n8n webhook at: {N8N_WEBHOOK_URL}/webhook/analyze-code")
         async with httpx.AsyncClient(timeout=30.0) as client:
             response = await client.post(
                 f"{N8N_WEBHOOK_URL}/webhook/analyze-code",
-                json=payload.dict()
+                json=workflow_data 
             )
             
             logger.info(f"n8n response: {response.status_code} - {response.text}")
             
             if response.status_code == 200:
-                return {"status": "success", "message": "Analysis triggered", "n8n_response": response.json()}
+                return {"status": "success", "message": "Analysis triggered", "user_linked": user_id, "n8n_response": response.json()}
             else:
                 logger.warning(f"n8n returned status {response.status_code}: {response.text}")
                 return {"status": "warning", "message": f"n8n returned {response.status_code}", "details": response.text}
@@ -927,7 +878,6 @@ async def jenkins_webhook(payload: JenkinsWebhookPayload):
     except Exception as e:
         logger.error(f"Failed to trigger n8n workflow: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to trigger analysis: {e}")
-
 
 # ===========================================
 # MCP Service Direct Access Endpoints
@@ -956,3 +906,4 @@ async def direct_mcp_analyze(service_name: str, data: Dict[str, Any] = Body(...)
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=3210)
+
