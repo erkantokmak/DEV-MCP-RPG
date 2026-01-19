@@ -43,6 +43,7 @@ services:
       - DB_POSTGRESDB_USER=dev_rpg_user
       - DB_POSTGRESDB_PASSWORD=dev_rpg_secret_2026
       - N8N_SECURE_COOKIE=false
+      - N8N_LOG_LEVEL=debug
     volumes:
       - n8n_data:/home/node/.n8n
       - ./n8n-workflows:/home/node/workflows:ro
@@ -111,7 +112,7 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
       args:
-        - VITE_API_URL=http://localhost:3210
+        - VITE_API_URL=${API_URL:-http://localhost:3210}
     container_name: dev-rpg-frontend
     ports:
       - "3200:80"

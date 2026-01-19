@@ -212,6 +212,7 @@ TZ=Europe/Istanbul
 
 # Server IP (change this to your server's IP)
 SERVER_IP=$(hostname -I 2>/dev/null | awk '{print $1}' || echo "localhost")
+API_URL=http://${SERVER_IP}:3210
 EOF
 
 log_success "Created .env file with Groq API configuration"

@@ -915,11 +915,13 @@ async def jenkins_webhook(payload: JenkinsWebhookPayload):
                 json=payload.dict()
             )
             
+            logger.info(f"n8n response: {response.status_code} - {response.text}")
+            
             if response.status_code == 200:
                 return {"status": "success", "message": "Analysis triggered", "n8n_response": response.json()}
             else:
-                logger.warning(f"n8n returned status {response.status_code}")
-                return {"status": "warning", "message": f"n8n returned {response.status_code}"}
+                logger.warning(f"n8n returned status {response.status_code}: {response.text}")
+                return {"status": "warning", "message": f"n8n returned {response.status_code}", "details": response.text}
     
     except Exception as e:
         logger.error(f"Failed to trigger n8n workflow: {e}")
