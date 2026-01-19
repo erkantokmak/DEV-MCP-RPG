@@ -51,6 +51,11 @@ class LLMClient:
         
         logger.info(f"LLM Client initialized with provider: {self.provider}")
     
+    @property
+    def model(self) -> str:
+        """Returns the currently active model name"""
+        return self.groq_model if self.provider == "groq" else self.ollama_model
+    
     @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=2, max=10))
     async def generate(self, prompt: str, system_prompt: Optional[str] = None) -> str:
         """
@@ -191,9 +196,8 @@ def create_analysis_prompt(base_prompt: str, code: str, language: Optional[str] 
 IMPORTANT: You MUST respond with ONLY valid JSON. No explanations, no markdown formatting outside the JSON, just pure JSON.
 
 Code to analyze{lang_hint}:
-```
+
 {code}
-```
 
 Remember: Output ONLY valid JSON, nothing else."""
 
